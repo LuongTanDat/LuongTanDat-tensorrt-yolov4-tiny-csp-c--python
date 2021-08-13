@@ -20,7 +20,12 @@
 #endif // CAM_ID_EXAMPLES
 
 bool stop_video = false;
-M::send_one_replaceable_object<M::pipeline_data> stream2detect, detect2show;
+M::send_one_replaceable_object<M::pipeline_data> stream2detect;
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+M::send_one_replaceable_object<M::pipeline_data> detect2pose, pose2show;
+#else
+M::send_one_replaceable_object<M::pipeline_data> detect2show;
+#endif // INFERENCE_ALPHAPOSE_TORCH
 std::atomic<int> current_fps_det(0);
 std::chrono::steady_clock::time_point fps_count_start;
 std::atomic<int> fps_det_counter(0);
@@ -52,10 +57,13 @@ int main()
     cfg->num_anchors = std::vector<int>{3, 3, 3};
     cfg->anchors = std::vector<std::vector<int>>{{12, 16}, {19, 36}, {40, 28}, {36, 75}, {76, 55}, {72, 146}, {142, 110}, {192, 243}, {459, 401}};
 #endif // YOLOv4_CSP_512
-
     YOLOv4 *yolo = new YOLOv4(cfg);
     yolo->LoadEngine();
 #endif // INFERENCE_DARKNET
+
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    AlphaPose *al = new AlphaPose("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/AlphaPose_TorchScript/model-zoo/fast_pose_res50/fast_res50_256x192.jit");
+#endif // INFERENCE_ALPHAPOSE_TORCH
 
 #ifdef __linux__
     XInitThreads();
@@ -117,7 +125,11 @@ int main()
                 p_data = stream2detect.receive();
                 if (p_data.cap_frame.empty())
                 {
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                    detect2pose.send(p_data);
+#else
                     detect2show.send(p_data);
+#endif
                     break;
                 }
                 p_data.uuid = gen_uuid(std::string("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/nobi-hw-videocapture/EMoi///"), std::string(".jpg"));
@@ -139,14 +151,54 @@ int main()
 #endif // INFERENCE_DARKNET
                     p_data.result.insert(_pair);
                 }
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                detect2pose.send(p_data);
+#else
                 detect2show.send(p_data);
-                fps_det_counter += 1;
+#endif
             }
         });
 
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::thread pose_thread(
+        [&]()
+        {
+            while (stop_video)
+            {
+                M::pipeline_data p_data;
+                // p_data.result.clear();
+                p_data = detect2pose.receive();
+                if (p_data.cap_frame.empty())
+                {
+                    pose2show.send(p_data);
+                    break;
+                }
+                for (int i = 0; i < 4; i++)
+                {
+                    cv::Mat roi(p_data.cap_frame, cv::Rect((i % 2) * VISUAL_WIDTH, (i / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
+                    std::vector<PoseKeypoints> poseKeypoints;
+                    std::vector<bbox> objBoxes;
+#ifdef INFERENCE_DARKNET
+                    M::convert_vecDetectRes_vecbbox<bbox_t>();
+#else
+                    M::convert_vecDetectRes_vecbbox<YOLOv4::DetectRes>(p_data.result[i], objBoxes);
+#endif
+                    al->predict(roi, objBoxes, poseKeypoints);
+                    std::pair<int, std::vector<PoseKeypoints>> _pair(i, poseKeypoints);
+                    p_data.poseKeypoints.insert(_pair);
+                }
+                pose2show.send(p_data);
+            }
+        });
+#endif
+
     while (stop_video)
     {
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        final_data = pose2show.receive();
+#else
         final_data = detect2show.receive();
+#endif //  INFERENCE_ALPHAPOSE_TORCH
         if (final_data.cap_frame.empty())
             break;
 // if (!state)
@@ -205,6 +257,16 @@ int main()
         }
 #endif
 
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        for (const std::pair<const int, std::vector<PoseKeypoints>> &_pair : final_data.poseKeypoints)
+        {
+            int cam = _pair.first;
+            std::vector<PoseKeypoints> pKp = _pair.second;
+            cv::Mat roi(final_data.cap_frame, cv::Rect((cam % 2) * VISUAL_WIDTH, (cam / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
+            al->draw(roi, pKp);
+        }
+#endif // INFERENCE_ALPHAPOSE_TORCH
+
         std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
         float time_sec = std::chrono::duration<double>(now - fps_count_start).count();
 
@@ -247,6 +309,10 @@ int main()
         retrieve_frame_thead.join();
     if (detector_thread.joinable())
         detector_thread.join();
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    if (pose_thread.joinable())
+        pose_thread.join();
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef DEBUG
     videoWriter.release();
 #endif // DEBUG

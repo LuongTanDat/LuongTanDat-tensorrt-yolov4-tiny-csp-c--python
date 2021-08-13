@@ -2,19 +2,20 @@
 #define THREAD_H
 
 // #define INFERENCE_DARKNET
-// #define INFERENCE_VIDEO
+#define INFERENCE_ALPHAPOSE_TORCH
+
+#define INFERENCE_VIDEO
 // #define TENSORRT_API
 // #define NOBI_CAMERA_AI_API
 // #define DEBUG
 
 // #define CAM_ID_EXAMPLES
-// #define VIDEO_EXAMPLES
+#define VIDEO_EXAMPLES
 
 #define YOLOv4_CSP_512
 // #define YOLOv4_608
 // #define YOLOv4_512_VIZGARD
 // #define YOLOv4_768_VIZGARD
-
 
 #include <thread>
 #include <chrono>
@@ -30,6 +31,10 @@
 #include "Yolov4.h"
 #endif // INFERENCE_DARKNET
 
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+#include "AlphaPose.h"
+#endif // INFERENCE_ALPHAPOSE_TORCH
+
 #ifdef __linux__
 #include <X11/Xlib.h>
 #elif _WIN32
@@ -37,6 +42,27 @@
 
 namespace M
 {
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    /*
+        T: bbox_t or YOLOv4::DetectRes
+    */
+    template <typename T>
+    void convert_DetectRes_bbox(const T &res, bbox &out)
+    {
+        return bbox((float)res.x, (float)res.y, (float)res.w, (float)res.h, (float)res.prob);
+    }
+
+    template <typename T>
+    void convert_vecDetectRes_vecbbox(const std::vector<T> &vecRes, std::vector<bbox> &conv)
+    {
+        for (T res : vecRes)
+        {
+            bbox outres;
+            convert_DetectRes_bbox<T>(res, outres);
+            conv.push_back(outres);
+        }
+    }
+#endif // INFERENCE_ALPHAPOSE_TORCH
     // TODO: Minimize, optimize this
     struct pipeline_data
     {
@@ -47,6 +73,9 @@ namespace M
 #else
         std::map<int, std::vector<YOLOv4::DetectRes>> result;
 #endif // INFERENCE_DARKNET
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        std::map<int, std::vector<PoseKeypoints>> poseKeypoints;
+#endif // INFERENCE_ALPHAPOSE_TORCH
         std::string uuid;
         pipeline_data(){};
         pipeline_data(cv::Mat frame) : cap_frame(frame){};
