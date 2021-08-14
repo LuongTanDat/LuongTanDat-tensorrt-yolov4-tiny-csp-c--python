@@ -8,7 +8,7 @@ int main()
 {
     M::VideoCapture cap(0, 0, 0);
 #ifdef VIDEO_EXAMPLES
-    cap.open("../EMoi-r.mp4", cv::CAP_GSTREAMER);
+    cap.open("../EMoi.mp4", cv::CAP_GSTREAMER);
 #endif // VIDEO_EXAMPLES
 #ifdef CAM_ID_EXAMPLES
     cap.open(0, cv::CAP_V4L2);
@@ -68,7 +68,7 @@ M::send_one_replaceable_object<M::pipeline_data> stream2show;
 int main()
 {
 #ifdef __linux__
-    XInitThreads();
+    // XInitThreads();
 #elif _WIN32
 #endif
     std::vector<M::StreamSource<TYPE>> sources;

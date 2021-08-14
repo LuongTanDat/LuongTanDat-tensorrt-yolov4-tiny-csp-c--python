@@ -1,6 +1,5 @@
 #ifndef ALPHAPOSE_H
 #define ALPHAPOSE_H
-#define _USE_MATH_DEFINES
 #include <torch/torch.h>
 #include <torch/script.h>
 #include <iostream>

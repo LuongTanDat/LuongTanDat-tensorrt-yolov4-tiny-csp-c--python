@@ -5,7 +5,7 @@ AlphaPose::AlphaPose(std::string model_path)
     try
     {
         // al = torch::jit::load("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/AlphaPose_TorchScript/model-zoo/fast_pose_res50/fast_res50_256x192.jit", torch::kCUDA);
-        this->al = torch::jit::load(model_path);
+        this->al = torch::jit::load(model_path, torch::kCUDA);
     }
     catch (const c10::Error &e)
     {
@@ -155,19 +155,16 @@ void AlphaPose::predict(cv::Mat image, std::vector<bbox> objBoxes, std::vector<P
         imageBatch.push_back(imageTensor);
     }
 
-    torch::Tensor iimageBatch = torch::cat(imageBatch, 0);
-    // std::cout << iimageBatch << std::endl;
     if (objBoxes.size() > 0)
     {
+        torch::Tensor iimageBatch = torch::cat(imageBatch, 0);
         torch::Tensor hm = this->al.forward({iimageBatch}).toTensor().to(torch::kCPU);
-        std::cout << hm << std::endl;
         postprocess(hm, cropped_boxes, poseKeypoints);
     }
 }
 
 void AlphaPose::draw(cv::Mat &drawMat, const std::vector<PoseKeypoints> &poseKeypoints)
 {
-    std::cout << "poseKeypoints.size\t" << poseKeypoints.size() << std::endl;
     for (PoseKeypoints pKp : poseKeypoints)
     {
         // for (int i = 0; i < 38; i += 2)
@@ -177,9 +174,9 @@ void AlphaPose::draw(cv::Mat &drawMat, const std::vector<PoseKeypoints> &poseKey
         //              cv::Point2i((int)pKp.keypoints[*(this->skeleton + i + 1)].x, (int)pKp.keypoints[*(this->skeleton + i + 1)].y),
         //              cv::Scalar(0, 255, 0), 1);
         // }
-
         for (int i = 0; i < pKp.keypoints.size(); i++)
         {
+            std::cout << pKp.keypoints[i].x << "\t" << pKp.keypoints[i].y << std::endl;
             cv::circle(drawMat, cv::Point2i((int)pKp.keypoints[i].x, (int)pKp.keypoints[i].y), 5, cv::Scalar(255, 0, 255), cv::FILLED, 8);
         }
     }

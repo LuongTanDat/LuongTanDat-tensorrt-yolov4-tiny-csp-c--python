@@ -65,10 +65,10 @@ int main()
     AlphaPose *al = new AlphaPose("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/AlphaPose_TorchScript/model-zoo/fast_pose_res50/fast_res50_256x192.jit");
 #endif // INFERENCE_ALPHAPOSE_TORCH
 
-#ifdef __linux__
-    XInitThreads();
-#elif _WIN32
-#endif
+    // #ifdef __linux__
+    //     XInitThreads();
+    // #elif _WIN32
+    // #endif
 
     auto timer_global_start = std::chrono::high_resolution_clock::now();
     std::vector<M::StreamSource<TYPE>> sources;
@@ -258,9 +258,11 @@ int main()
 #endif
 
 #ifdef INFERENCE_ALPHAPOSE_TORCH
+        std::cout << "[PoseKeypoints]\t" << final_data.poseKeypoints.size() << std::endl;
         for (const std::pair<const int, std::vector<PoseKeypoints>> &_pair : final_data.poseKeypoints)
         {
             int cam = _pair.first;
+            std::cout << "[CAM]\t" << cam << std::endl;
             std::vector<PoseKeypoints> pKp = _pair.second;
             cv::Mat roi(final_data.cap_frame, cv::Rect((cam % 2) * VISUAL_WIDTH, (cam / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
             al->draw(roi, pKp);
@@ -296,6 +298,7 @@ int main()
             std::cout << "Write to result.mp4" << std::endl;
         }
 #endif // DEBUG
+        cv::imwrite("result.jpg", display_frame);
         cv::imshow("final", display_frame);
         // Press  ESC on keyboard to exit
         char c = (char)cv::waitKey(1);

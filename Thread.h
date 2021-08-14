@@ -2,15 +2,15 @@
 #define THREAD_H
 
 // #define INFERENCE_DARKNET
-#define INFERENCE_ALPHAPOSE_TORCH
+// #define INFERENCE_ALPHAPOSE_TORCH
 
-#define INFERENCE_VIDEO
+// #define INFERENCE_VIDEO
 // #define TENSORRT_API
 // #define NOBI_CAMERA_AI_API
 // #define DEBUG
 
 // #define CAM_ID_EXAMPLES
-#define VIDEO_EXAMPLES
+// #define VIDEO_EXAMPLES
 
 #define YOLOv4_CSP_512
 // #define YOLOv4_608
@@ -35,11 +35,6 @@
 #include "AlphaPose.h"
 #endif // INFERENCE_ALPHAPOSE_TORCH
 
-#ifdef __linux__
-#include <X11/Xlib.h>
-#elif _WIN32
-#endif
-
 namespace M
 {
 #ifdef INFERENCE_ALPHAPOSE_TORCH
@@ -49,14 +44,22 @@ namespace M
     template <typename T>
     void convert_DetectRes_bbox(const T &res, bbox &out)
     {
-        return bbox((float)res.x, (float)res.y, (float)res.w, (float)res.h, (float)res.prob);
+        bbox((float)res.x, (float)res.y, (float)res.w, (float)res.h, (float)res.prob);
     }
 
     template <typename T>
     void convert_vecDetectRes_vecbbox(const std::vector<T> &vecRes, std::vector<bbox> &conv)
     {
+
         for (T res : vecRes)
         {
+#ifdef INFERENCE_DARKNET
+            if (res.obj_id > 4)
+#else
+            if (res.classes > 4)
+#endif // INFERENCE_DARKNET
+                continue;
+
             bbox outres;
             convert_DetectRes_bbox<T>(res, outres);
             conv.push_back(outres);

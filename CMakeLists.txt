@@ -1,11 +1,14 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 project(Yolov4_trt)
 
 set(CMAKE_CXX_STANDARD 20)
-set(GCC_CXX_FLAGS "${GCC_CXX_FLAGS} -lX11")
+set(GCC_CXX_FLAGS "${GCC_CXX_FLAGS} -lboost_system -lboost_thread")
+set(APP Nobi_App)
+# set(CMAKE_PREFIX_PATH /usr/local/libtorch)
 
 option(INFERENCE_DARKNET "INFERENCE_DARKNET" OFF)
+option(INFERENCE_ALPHAPOSE_TORCH "INFERENCE_ALPHAPOSE_TORCH" OFF)
 option(INFERENCE_VIDEO "Inference videos in realtime" OFF)
 option(TENSORRT_API "TensorRT API binding python" OFF)
 option(NOBI_CAMERA_AI_API "TensorRT integrate Nobi's Camera AI" OFF)
@@ -47,16 +50,42 @@ if (VIDEO_EXAMPLES)
     add_definitions(-DVIDEO_EXAMPLES)
 endif (VIDEO_EXAMPLES)
 
+set(LIB ${LIB} -lboost_system -lboost_thread)
+
 # CUDA
 find_package(CUDA REQUIRED)
-message(STATUS "Find CUDA include at ${CUDA_INCLUDE_DIRS}")
-message(STATUS "Find CUDA libraries: ${CUDA_LIBRARIES}")
+set(LIB ${LIB} ${CUDA_LIBRARIES})
+set(INC ${INC} ${CUDA_INCLUDE_DIRS})
 
 # OpenCV
 find_package(OpenCV REQUIRED)
+set(LIB ${LIB} ${OpenCV_LIBRARIES})
+set(INC ${INC} ${OpenCV_INCLUDE_DIRS})
+
+find_package(Boost REQUIRED)
+
+if (FOUR_CAMS OR SINGLE_CAM)
+    set(SRC ${SRC} VideoCapture.cpp)
+else()
+    set(SRC ${SRC} main.cpp)
+endif(FOUR_CAMS OR SINGLE_CAM)
+
+# Torch
+if (INFERENCE_ALPHAPOSE_TORCH)
+    add_definitions(-DINFERENCE_ALPHAPOSE_TORCH)
+    find_package(Torch REQUIRED)
+    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS})
+    message(STATUS "CMAKE_CXX_FLAGS:     ${CMAKE_CXX_FLAGS}")
+    message(STATUS "TORCH_INCLUDE_DIRS:  ${TORCH_INCLUDE_DIRS}")
+    message(STATUS "TORCH_LIBRARIES:     ${TORCH_LIBRARIES}")
+    set(SRC ${SRC} AlphaPose.cpp)
+    set(LIB ${LIB} ${TORCH_LIBRARIES})
+    set(INC ${INC} ${TORCH_INCLUDE_DIRS})
+endif(INFERENCE_ALPHAPOSE_TORCH)
 
 if (INFERENCE_DARKNET)
     add_definitions(-DINFERENCE_DARKNET)
+    set(LIB ${LIB} libdarknet.so)
 else()
     # TensorRT
     set(TENSORRT_ROOT /usr/local/TensorRT)
@@ -69,36 +98,15 @@ else()
         HINTS  ${TENSORRT_ROOT} ${TENSORRT_BUILD} ${CUDA_TOOLKIT_ROOT_DIR}
         PATH_SUFFIXES lib lib64 lib/x64)
     set(TENSORRT_LIBRARY ${TENSORRT_LIBRARY_INFER} ${TENSORRT_LIBRARY_ONNXPARSER})
+    set(SRC ${SRC} Yolov4.cpp)
+    set(LIB ${LIB} ${TENSORRT_LIBRARY})
+    set(INC ${INC} ${TENSORRT_INCLUDE_DIR})
 endif(INFERENCE_DARKNET)
 
-include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+include_directories(${INC})
 
-if (FOUR_CAMS OR SINGLE_CAM)
-    if (INFERENCE_DARKNET)
-        add_executable(Streamming VideoCapture.cpp)
-        target_link_libraries(Streamming ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} -lX11 libdarknet.so)
-    else()
-        add_executable(Streamming VideoCapture.cpp Yolov4.cpp)
-        target_link_libraries(Streamming ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} -lX11 ${TENSORRT_LIBRARY})
-    endif(INFERENCE_DARKNET)
-elseif (NOBI_CAMERA_AI_API)
-    if (INFERENCE_DARKNET)
-        add_executable(Nobi_Camera_AI main.cpp)
-        target_link_libraries(Nobi_Camera_AI ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} -lX11 libdarknet.so)
-    else()
-        add_executable(Nobi_Camera_AI main.cpp Yolov4.cpp)
-        target_link_libraries(Nobi_Camera_AI ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} -lX11)
-    endif(INFERENCE_DARKNET)
-else ()
-    if (INFERENCE_DARKNET)
-        add_executable(Nobi_App main.cpp)
-        target_link_libraries(Nobi_App ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} -lX11 libdarknet.so)
-    else()
-        add_executable(Nobi_App main.cpp Yolov4.cpp)
-        target_link_libraries(Nobi_App ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} -lX11)
-    endif(INFERENCE_DARKNET)
-endif ()
-
+add_executable(${APP} ${SRC})
+target_link_libraries(${APP} ${LIB})
 
 # [v] cmake -D SINGLE_CAM=ON -D VIDEO_EXAMPLES=ON ..
 # [v] cmake -D SINGLE_CAM=ON -D CAM_ID_EXAMPLES=ON ..
@@ -120,7 +128,7 @@ endif ()
 # [v] cmake -D NOBI_CAMERA_AI_API=ON -D CAM_ID_EXAMPLES=ON ..
 # [v] cmake -D NOBI_CAMERA_AI_API=ON -D VIDEO_EXAMPLES=ON -D DEBUG=ON ..
 # [v] cmake -D NOBI_CAMERA_AI_API=ON -D CAM_ID_EXAMPLES=ON -D DEBUG=ON ..
-# ./Nobi_Camera_AI \
+# ./${APP} \
 # --engine-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine" \
 # --label-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names" \
 # --save-dir "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/nobi-hw-videocapture/EMoi" \
@@ -130,7 +138,7 @@ endif ()
 # [v] cmake -D NOBI_CAMERA_AI_API=ON -D CAM_ID_EXAMPLES=ON ..
 # [v] cmake -D NOBI_CAMERA_AI_API=ON -D VIDEO_EXAMPLES=ON -D DEBUG=ON ..
 # [v] cmake -D NOBI_CAMERA_AI_API=ON -D CAM_ID_EXAMPLES=ON -D DEBUG=ON ..
-# ./Nobi_App \
+# ./${APP} \
 # --engine-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine" \
 # --label-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names" \
 # --save-dir "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/nobi-hw-videocapture/EMoi///" \
@@ -138,9 +146,9 @@ endif ()
 
 # [v] cmake -DINFERENCE_DARKNET=ON -DINFERENCE_VIDEO=ON -DVIDEO_EXAMPLES=ON ..
 # [v] cmake -DINFERENCE_DARKNET=ON -DTENSORRT_API=ON -DVIDEO_EXAMPLES=ON -DDEBUG=ON ..
-# ./Nobi_App \
+# ./${APP} \
 # --weights-file /mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/yolov4-csp/yolov4-csp-512.weights \
 # --cfg-file /mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/yolov4-csp/yolov4-csp-512.cfg \
 # --names-file /mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/yolov4-csp/yolov4-csp-512.names \
 # --thresh 0.5 --dont-show
-
+# [ ] cmake -DINFERENCE_VIDEO=ON -DVIDEO_EXAMPLES=ON -DINFERENCE_ALPHAPOSE_TORCH=ON ..

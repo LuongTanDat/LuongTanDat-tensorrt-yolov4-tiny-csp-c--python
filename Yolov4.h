@@ -11,7 +11,7 @@
 #include "NvOnnxParser.h"
 #include "logging.h"
 #ifdef __linux__
-#include <X11/Xlib.h>
+// #include <X11/Xlib.h>
 #elif _WIN32
 #endif
 
@@ -39,7 +39,7 @@ class YOLOv4
 public:
     struct DetectRes
     {
-        int classes;
+        unsigned int classes;
         float x;
         float y;
         float w;
