@@ -1,4 +1,7 @@
 ﻿#include "main.h"
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+#define pose_box bbox
+#endif // INFERENCE_ALPHAPOSE_TORCH
 
 #ifdef INFERENCE_VIDEO
 #ifdef VIDEO_EXAMPLES
@@ -44,7 +47,6 @@ int main()
     Config *cfg = new Config();
     cfg->BATCH_SIZE = 1;
     cfg->INPUT_CHANNEL = 3;
-
 #ifdef YOLOv4_CSP_512
     cfg->engine_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine";
     cfg->labels_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names";
@@ -64,11 +66,6 @@ int main()
 #ifdef INFERENCE_ALPHAPOSE_TORCH
     AlphaPose *al = new AlphaPose("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/AlphaPose_TorchScript/model-zoo/fast_pose_res50/fast_res50_256x192.jit");
 #endif // INFERENCE_ALPHAPOSE_TORCH
-
-    // #ifdef __linux__
-    //     XInitThreads();
-    // #elif _WIN32
-    // #endif
 
     auto timer_global_start = std::chrono::high_resolution_clock::now();
     std::vector<M::StreamSource<TYPE>> sources;
@@ -129,7 +126,7 @@ int main()
                     detect2pose.send(p_data);
 #else
                     detect2show.send(p_data);
-#endif
+#endif // INFERENCE_ALPHAPOSE_TORCH
                     break;
                 }
                 p_data.uuid = gen_uuid(std::string("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/nobi-hw-videocapture/EMoi///"), std::string(".jpg"));
@@ -155,7 +152,7 @@ int main()
                 detect2pose.send(p_data);
 #else
                 detect2show.send(p_data);
-#endif
+#endif // INFERENCE_ALPHAPOSE_TORCH
             }
         });
 
@@ -178,11 +175,7 @@ int main()
                     cv::Mat roi(p_data.cap_frame, cv::Rect((i % 2) * VISUAL_WIDTH, (i / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
                     std::vector<PoseKeypoints> poseKeypoints;
                     std::vector<bbox> objBoxes;
-#ifdef INFERENCE_DARKNET
-                    M::convert_vecDetectRes_vecbbox<bbox_t>();
-#else
-                    M::convert_vecDetectRes_vecbbox<YOLOv4::DetectRes>(p_data.result[i], objBoxes);
-#endif
+                    M::convert_vecDetectRes_vecbbox(p_data.result[i], objBoxes);
                     al->predict(roi, objBoxes, poseKeypoints);
                     std::pair<int, std::vector<PoseKeypoints>> _pair(i, poseKeypoints);
                     p_data.poseKeypoints.insert(_pair);
@@ -190,7 +183,7 @@ int main()
                 pose2show.send(p_data);
             }
         });
-#endif
+#endif // INFERENCE_ALPHAPOSE_TORCH
 
     while (stop_video)
     {
@@ -258,11 +251,9 @@ int main()
 #endif
 
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-        std::cout << "[PoseKeypoints]\t" << final_data.poseKeypoints.size() << std::endl;
         for (const std::pair<const int, std::vector<PoseKeypoints>> &_pair : final_data.poseKeypoints)
         {
             int cam = _pair.first;
-            std::cout << "[CAM]\t" << cam << std::endl;
             std::vector<PoseKeypoints> pKp = _pair.second;
             cv::Mat roi(final_data.cap_frame, cv::Rect((cam % 2) * VISUAL_WIDTH, (cam / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
             al->draw(roi, pKp);
@@ -332,7 +323,16 @@ int main(int argc, char **argv)
     std::string names_file;
     float thresh = 0.5;
     bool dont_show = false;
-    ParseCommandLine(argc, argv, weights_file, names_file, cfg_file, thresh, dont_show);
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::string alphapose_model;
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    ParseCommandLine(argc, argv, weights_file, names_file, cfg_file
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                     ,
+                     alphapose_model
+#endif // INFERENCE_ALPHAPOSE_TORCH
+                     ,
+                     thresh, dont_show);
     Detector yolo(cfg_file, weights_file);
     std::vector<cv::String> obj_names = objects_names_from_file(names_file);
     int const colors[6][3] = {{1, 0, 1}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}};
@@ -345,10 +345,22 @@ int main(int argc, char **argv)
     cfg->anchors = std::vector<std::vector<int>>{{12, 16}, {19, 36}, {40, 28}, {36, 75}, {76, 55}, {72, 146}, {142, 110}, {192, 243}, {459, 401}};
     cfg->iou_with_distance = false;
     bool dont_show = false;
-    ParseCommandLine(argc, argv, cfg, dont_show);
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::string alphapose_model;
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    ParseCommandLine(argc, argv, cfg, dont_show
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                     ,
+                     alphapose_model
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    );
+
     YOLOv4 *yolo = new YOLOv4(cfg);
     yolo->LoadEngine();
 #endif // INFERENCE_DARKNET
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    AlphaPose *al = new AlphaPose(alphapose_model);
+#endif // INFERENCE_ALPHAPOSE_TORCH
     while (1)
     {
         std::string image_path;
@@ -361,12 +373,14 @@ int main(int argc, char **argv)
 #else
         std::vector<YOLOv4::DetectRes> result = yolo->EngineInference(image);
 #endif // INFERENCE_DARKNET
-
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        std::vector<pose_box> inputPose;
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
 #ifdef DEBUG
         std::cout << "result.size\t" << result.size() << std::endl;
 #endif // DEBUG
-        for (const auto &rect : result)
+        for (const bbox_t &rect : result)
         {
             int x_left = (rect.x < 0) ? 0 : rect.x;
             int y_top = (rect.y < 0) ? 0 : rect.y;
@@ -386,9 +400,20 @@ int main(int argc, char **argv)
                 cv::Rect rst(x_left, y_top, rect.w, rect.h);
                 cv::rectangle(image, rst, obj_id_to_color(rect.obj_id), 2, cv::LINE_8, 0);
             }
+
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+            if (rect.obj_id > 4)
+                continue;
+            else
+            {
+                pose_box b;
+                M::convert_DetectRes_bbox(rect, b);
+                inputPose.push_back(b);
+            }
+#endif // INFERENCE_ALPHAPOSE_TORCH
         }
 #else
-        for (const auto &rect : result)
+        for (const YOLOv4::DetectRes &rect : result)
         {
             int x_left = rect.x - rect.w / 2;
             x_left = (x_left < 0) ? 0 : x_left;
@@ -410,8 +435,23 @@ int main(int argc, char **argv)
                 cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
                 cv::rectangle(image, rst, yolo->class_colors[rect.classes], 2, cv::LINE_8, 0);
             }
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+            if (rect.classes > 4)
+                continue;
+            else
+            {
+                pose_box b;
+                M::convert_DetectRes_bbox(rect, b);
+                inputPose.push_back(b);
+            }
+#endif // INFERENCE_ALPHAPOSE_TORCH
         }
-#endif
+#endif // INFERENCE_DARKNET
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        std::vector<PoseKeypoints> pKps;
+        al->predict(image, inputPose, pKps);
+        al->draw(image, pKps);
+#endif // INFERENCE_ALPHAPOSE_TORCH
         if (!dont_show)
         {
             cv::imshow("HNIW", image);
@@ -421,7 +461,6 @@ int main(int argc, char **argv)
             cv::imwrite("result.jpg", image);
         image.release();
     }
-
     return 0;
 }
 #endif // TENSORRT_API
@@ -456,7 +495,16 @@ int main(int argc, char **argv)
     float thresh = 0.5;
     bool dont_show = false;
     std::string save_dir;
-    ParseCommandLine(argc, argv, weights_file, names_file, cfg_file, save_dir, thresh, dont_show);
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::string alphapose_model;
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    ParseCommandLine(argc, argv, weights_file, names_file, cfg_file
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                     ,
+                     alphapose_model
+#endif // INFERENCE_ALPHAPOSE_TORCH
+                     ,
+                     save_dir, thresh, dont_show);
     Detector yolo(cfg_file, weights_file);
     std::vector<cv::String> obj_names = objects_names_from_file(names_file);
     int const colors[6][3] = {{1, 0, 1}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}};
@@ -470,7 +518,15 @@ int main(int argc, char **argv)
     cfg->iou_with_distance = false;
     bool dont_show = false;
     std::string save_dir;
-    ParseCommandLine(argc, argv, cfg, dont_show, save_dir);
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::string alphapose_model;
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    ParseCommandLine(argc, argv, cfg, dont_show, save_dir
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                     ,
+                     alphapose_model
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    );
 #ifdef DEBUG
     std::cout << "[DEBUG] "
               << "save_dir: " << save_dir << std::endl;
@@ -479,6 +535,9 @@ int main(int argc, char **argv)
     YOLOv4 *yolo = new YOLOv4(cfg);
     yolo->LoadEngine();
 #endif // INFERENCE_DARKNET
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    AlphaPose *al = new AlphaPose(alphapose_model);
+#endif // INFERENCE_ALPHAPOSE_TORCH
 
     std::vector<M::StreamSource<TYPE>> sources;
     sources.push_back(M::StreamSource<TYPE>(SOURCE0, BACKEND, 0, 0, 0));
@@ -549,17 +608,17 @@ int main(int argc, char **argv)
             int cam = _pair.first;
             std::vector<bbox_t> result = _pair.second;
             cv::Mat roi(p_data.cap_frame, cv::Rect((cam % 2) * VISUAL_WIDTH, (cam / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
-
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+            std::vector<pose_box> inputPose;
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef DEBUG
             std::cout << "[DEBUG] "
                       << "UUID\t" << p_data.uuid << std::endl;
 #endif // DEBUG
-            for (const auto &rect : result)
+            for (const bbox_t &rect : result)
             {
-                int x_left = rect.x - rect.w / 2;
-                x_left = (x_left < 0) ? 0 : x_left;
-                int y_top = rect.y - rect.h / 2;
-                y_top = (y_top < 0) ? 0 : y_top;
+                int x_left = (rect.x < 0) ? 0 : rect.x;
+                int y_top = (rect.y < 0) ? 0 : rect.y;
                 std::cout << "[CAM] " << cam << "\t"
                           << obj_names[rect.obj_id]
                           << "\t" << static_cast<int>(rect.prob * 100) << "%\t"
@@ -580,11 +639,26 @@ int main(int argc, char **argv)
                     char t[256];
                     sprintf(t, "%.2f", rect.prob);
                     std::string name = obj_names[rect.obj_id] + "-" + t;
-                    cv::putText(roi, name, cv::Point(rect.x - rect.w / 2, rect.y - rect.h / 2 - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, obj_id_to_color(rect.obj_id), 2);
-                    cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
+                    cv::putText(roi, name, cv::Point(x_left, y_top - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, obj_id_to_color(rect.obj_id), 2);
+                    cv::Rect rst(x_left, y_top, rect.w, rect.h);
                     cv::rectangle(roi, rst, obj_id_to_color(rect.obj_id), 2, cv::LINE_8, 0);
                 }
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                if (rect.obj_id > 4)
+                    continue;
+                else
+                {
+                    pose_box b;
+                    M::convert_DetectRes_bbox(rect, b);
+                    inputPose.push_back(b);
+                }
+#endif // INFERENCE_ALPHAPOSE_TORCH
             }
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+            std::vector<PoseKeypoints> pKps;
+            al->predict(roi, inputPose, pKps);
+            al->draw(roi, pKps);
+#endif // INFERENCE_ALPHAPOSE_TORCH
         }
 #else
         for (const std::pair<const int, std::vector<YOLOv4::DetectRes>> &_pair : p_data.result)
@@ -592,7 +666,9 @@ int main(int argc, char **argv)
             int cam = _pair.first;
             std::vector<YOLOv4::DetectRes> result = _pair.second;
             cv::Mat roi(p_data.cap_frame, cv::Rect((cam % 2) * VISUAL_WIDTH, (cam / 2) * VISUAL_HEIGHT, VISUAL_WIDTH, VISUAL_HEIGHT));
-
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+            std::vector<pose_box> inputPose;
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef DEBUG
             std::cout << "[DEBUG] "
                       << "UUID\t" << p_data.uuid << std::endl;
@@ -627,7 +703,22 @@ int main(int argc, char **argv)
                     cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
                     cv::rectangle(roi, rst, yolo->class_colors[rect.classes], 2, cv::LINE_8, 0);
                 }
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                if (rect.classes > 4)
+                    continue;
+                else
+                {
+                    pose_box b;
+                    M::convert_DetectRes_bbox(rect, b);
+                    inputPose.push_back(b);
+                }
+#endif // INFERENCE_ALPHAPOSE_TORCH
             }
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+            std::vector<PoseKeypoints> pKps;
+            al->predict(roi, inputPose, pKps);
+            al->draw(roi, pKps);
+#endif // INFERENCE_ALPHAPOSE_TORCH
         }
 #endif // INFERENCE_DARKNET
 

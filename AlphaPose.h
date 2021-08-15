@@ -67,11 +67,13 @@ struct bbox
         j["w"] = rect.width;
         j["h"] = rect.height;
         std::string js = j.dump(4);
+#ifdef DEBUG
         std::cout << js << std::endl;
-
+#else
         std::ofstream f1(jname);
         f1 << std::setw(4) << j << std::endl;
         f1.close();
+#endif // DEBUG
     }
     cv::Rect_<float> rect; //x y w h
     float score;

@@ -38,34 +38,53 @@
 namespace M
 {
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-    /*
-        T: bbox_t or YOLOv4::DetectRes
-    */
-    template <typename T>
-    void convert_DetectRes_bbox(const T &res, bbox &out)
+#ifdef INFERENCE_DARKNET
+    void convert_DetectRes_bbox(const bbox_t &res, bbox &out)
+#else
+    void convert_DetectRes_bbox(const YOLOv4::DetectRes &res, bbox &out)
+#endif // INFERENCE_DARKNET
     {
-        bbox((float)res.x, (float)res.y, (float)res.w, (float)res.h, (float)res.prob);
+#ifdef INFERENCE_DARKNET
+        out.rect.x = (float)res.x;
+        out.rect.y = (float)res.y;
+#else
+        out.rect.x = (float)(res.x - res.w / 2);
+        out.rect.y = (float)(res.y - res.h / 2);
+#endif // INFERENCE_DARKNET
+        out.rect.width = (float)res.w;
+        out.rect.height = (float)res.h;
+        out.score = (float)res.prob;
     }
 
-    template <typename T>
-    void convert_vecDetectRes_vecbbox(const std::vector<T> &vecRes, std::vector<bbox> &conv)
-    {
-
-        for (T res : vecRes)
-        {
 #ifdef INFERENCE_DARKNET
+    void convert_vecDetectRes_vecbbox(const std::vector<bbox_t> &vecRes, std::vector<bbox> &conv)
+    {
+        for (bbox_t res : vecRes)
+        {
             if (res.obj_id > 4)
-#else
-            if (res.classes > 4)
-#endif // INFERENCE_DARKNET
                 continue;
 
             bbox outres;
-            convert_DetectRes_bbox<T>(res, outres);
+            convert_DetectRes_bbox(res, outres);
             conv.push_back(outres);
         }
     }
+#else
+    void convert_vecDetectRes_vecbbox(const std::vector<YOLOv4::DetectRes> &vecRes, std::vector<bbox> &conv)
+    {
+        for (YOLOv4::DetectRes res : vecRes)
+        {
+            if (res.classes > 4)
+                continue;
+
+            bbox outres;
+            convert_DetectRes_bbox(res, outres);
+            conv.push_back(outres);
+        }
+    }
+#endif // INFERENCE_DARKNET
 #endif // INFERENCE_ALPHAPOSE_TORCH
+
     // TODO: Minimize, optimize this
     struct pipeline_data
     {

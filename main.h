@@ -61,6 +61,9 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
         << "    --weights-file  : Weights model" << std::endl
         << "    --cfg-file      : .cfg file" << std::endl
         << "    --names-file    : .names file" << std::endl
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        << "    --alphapose-jit : Alphapose torchscript model" << std::endl
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef NOBI_CAMERA_AI_API
         << "    --save-dir      : Path to folder contain images" << std::endl
 #endif // NOBI_CAMERA_AI_API
@@ -73,11 +76,17 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
     }
 }
 
+void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                      ,
+                      std::string &alphapose_model
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef NOBI_CAMERA_AI_API
-void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file, std::string &save_dir, float &thresh, bool &dont_show)
-#else
-void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file, float &thresh, bool &dont_show)
-#endif
+                      ,
+                      std::string &save_dir
+#endif // NOBI_CAMERA_AI_API
+                      ,
+                      float &thresh, bool &dont_show)
 {
     int i;
     for (i = 1; i < argc; i++)
@@ -104,6 +113,16 @@ void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::st
             continue;
         }
 #endif // NOBI_CAMERA_AI_API
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        else if (std::string(argv[i]) == std::string("--alphapose-jit"))
+        {
+            if (++i == argc)
+                ShowHelpAndExit("--alphapose-jit");
+            else
+                alphapose_model = std::string(argv[i]);
+            continue;
+        }
+#endif // INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--names-file"))
         {
             if (++i == argc)
@@ -165,6 +184,9 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
         << "    --label-file    : .names file" << std::endl
         << "    --dims          : W H format" << std::endl
         << "    --type-yolo     : yolov4/csp/tiny" << std::endl
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        << "    --alphapose-jit : Alphapose torchscript model" << std::endl
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef NOBI_CAMERA_AI_API
         << "    --save-dir      : Path to folder contain images" << std::endl
 #endif
@@ -177,11 +199,17 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
         throw std::invalid_argument(oss.str());
     }
 }
+
+void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
 #ifdef NOBI_CAMERA_AI_API
-void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show, std::string &save_dir)
-#else
-void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show)
-#endif
+                      ,
+                      std::string &save_dir
+#endif // NOBI_CAMERA_AI_API
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                      ,
+                      std::string &alphapose_model
+#endif // INFERENCE_ALPHAPOSE_TORCH
+)
 {
     int i;
 
@@ -209,6 +237,16 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show)
             continue;
         }
 #endif // NOBI_CAMERA_AI_API
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        else if (std::string(argv[i]) == std::string("--alphapose-jit"))
+        {
+            if (++i == argc)
+                ShowHelpAndExit("--alphapose-jit");
+            else
+                alphapose_model = std::string(argv[i]);
+            continue;
+        }
+#endif // INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--label-file"))
         {
             if (++i == argc)

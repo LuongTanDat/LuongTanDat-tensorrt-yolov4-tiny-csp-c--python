@@ -40,8 +40,8 @@ public:
     struct DetectRes
     {
         unsigned int classes;
-        float x;
-        float y;
+        float x; // x_center
+        float y; // y_center
         float w;
         float h;
         float prob;

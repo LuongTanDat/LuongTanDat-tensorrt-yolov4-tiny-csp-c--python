@@ -176,7 +176,6 @@ void AlphaPose::draw(cv::Mat &drawMat, const std::vector<PoseKeypoints> &poseKey
         // }
         for (int i = 0; i < pKp.keypoints.size(); i++)
         {
-            std::cout << pKp.keypoints[i].x << "\t" << pKp.keypoints[i].y << std::endl;
             cv::circle(drawMat, cv::Point2i((int)pKp.keypoints[i].x, (int)pKp.keypoints[i].y), 5, cv::Scalar(255, 0, 255), cv::FILLED, 8);
         }
     }
