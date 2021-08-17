@@ -10,7 +10,9 @@
 #include <map>
 #include <chrono>
 #include <atomic>
+#ifdef JSON
 #include "json.hpp"
+#endif // JSON
 #include "fstream"
 
 struct PoseKeypoints
@@ -30,23 +32,28 @@ struct PoseKeypoints
         return os.str();
     }
 
-    void to_json(std::string jname, std::map<int, std::string> listName)
-    {
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
+    nlohmann::json to_json()
+    {
         nlohmann::json j;
+        nlohmann::json pKps_x = {};
+        nlohmann::json pKps_y = {};
+        nlohmann::json scores = {};
         for (int i = 0; i < kp_scores.size(); i++)
         {
-            std::string i_str = listName[i];
-            j[i_str] = {{"x", keypoints[i].x}, {"y", keypoints[i].y}, {"score", kp_scores[i]}};
+            pKps_x.push_back(keypoints[i].x);
+            pKps_y.push_back(keypoints[i].y);
+            scores.push_back(kp_scores[i]);
         }
-        std::string js = j.dump(2);
-        std::cout << js << std::endl;
-
-        std::ofstream f1(jname);
-        f1 << std::setw(4) << j << std::endl;
-        f1.close();
-#endif // INCLUDE_NLOHMANN_JSON_HPP_
+        j["x"] = pKps_x;
+        j["y"] = pKps_y;
+        j["score"] = scores;
+#ifdef DEBUG
+        std::cout << "[DEBUG][JSON] " << j << std::endl;
+#endif // DEBUG
+        return j;
     }
+#endif // INCLUDE_NLOHMANN_JSON_HPP_
 };
 
 struct bbox
@@ -59,7 +66,8 @@ struct bbox
         os << "x: " << rect.x << "  y: " << rect.y << "  w: " << rect.width << "  h: " << rect.height;
         return os.str();
     }
-    void to_json(std::string jname)
+#ifdef INCLUDE_NLOHMANN_JSON_HPP_
+    nlohmann::json to_json()
     {
         nlohmann::json j;
         j["x"] = rect.x;
@@ -70,11 +78,10 @@ struct bbox
 #ifdef DEBUG
         std::cout << js << std::endl;
 #else
-        std::ofstream f1(jname);
-        f1 << std::setw(4) << j << std::endl;
-        f1.close();
+
 #endif // DEBUG
     }
+#endif                     // INCLUDE_NLOHMANN_JSON_HPP_
     cv::Rect_<float> rect; //x y w h
     float score;
 };

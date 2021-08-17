@@ -317,15 +317,15 @@ int main()
 // ./Yolov4_trt --engine-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine" --label-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names" --dims 512 512 --obj-thres 0.3 --nms-thres 0.3 --type-yolo csp --dont-show
 int main(int argc, char **argv)
 {
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::string alphapose_model;
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
     std::string weights_file;
     std::string cfg_file;
     std::string names_file;
     float thresh = 0.5;
     bool dont_show = false;
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-    std::string alphapose_model;
-#endif // INFERENCE_ALPHAPOSE_TORCH
     ParseCommandLine(argc, argv, weights_file, names_file, cfg_file
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
@@ -345,9 +345,6 @@ int main(int argc, char **argv)
     cfg->anchors = std::vector<std::vector<int>>{{12, 16}, {19, 36}, {40, 28}, {36, 75}, {76, 55}, {72, 146}, {142, 110}, {192, 243}, {459, 401}};
     cfg->iou_with_distance = false;
     bool dont_show = false;
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-    std::string alphapose_model;
-#endif // INFERENCE_ALPHAPOSE_TORCH
     ParseCommandLine(argc, argv, cfg, dont_show
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
@@ -384,6 +381,7 @@ int main(int argc, char **argv)
         {
             int x_left = (rect.x < 0) ? 0 : rect.x;
             int y_top = (rect.y < 0) ? 0 : rect.y;
+#ifndef JSON
             std::cout << obj_names[rect.obj_id] << ": " << static_cast<int>(rect.prob * 100)
                       << "%\tx_left:  " << static_cast<int>(x_left)
                       << "   y_top:  " << static_cast<int>(y_top)
@@ -391,6 +389,8 @@ int main(int argc, char **argv)
                       << "   height:  " << static_cast<int>(rect.h)
                       << std::endl;
             std::cout.flush();
+#endif // !JSON
+
             // if (!dont_show)
             {
                 char t[256];
@@ -419,6 +419,7 @@ int main(int argc, char **argv)
             x_left = (x_left < 0) ? 0 : x_left;
             int y_top = rect.y - rect.h / 2;
             y_top = (y_top < 0) ? 0 : y_top;
+#ifndef JSON
             std::cout << yolo->detect_labels[rect.classes] << ": " << static_cast<int>(rect.prob * 100)
                       << "%\tx_left:  " << static_cast<int>(x_left)
                       << "   y_top:  " << static_cast<int>(y_top)
@@ -426,6 +427,8 @@ int main(int argc, char **argv)
                       << "   height:  " << static_cast<int>(rect.h)
                       << std::endl;
             std::cout.flush();
+#endif // !JSON
+
             // if (!dont_show)
             {
                 char t[256];
@@ -452,6 +455,16 @@ int main(int argc, char **argv)
         al->predict(image, inputPose, pKps);
         al->draw(image, pKps);
 #endif // INFERENCE_ALPHAPOSE_TORCH
+#ifdef JSON
+        std::cout << M::res_to_json(result
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                                    ,
+                                    pKps
+#endif // INFERENCE_ALPHAPOSE_TORCH
+                                    )
+                  << std::endl;
+        std::cout.flush();
+#endif // JSON
         if (!dont_show)
         {
             cv::imshow("HNIW", image);
@@ -488,6 +501,9 @@ int main(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+    std::string alphapose_model;
+#endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
     std::string weights_file;
     std::string cfg_file;
@@ -495,9 +511,6 @@ int main(int argc, char **argv)
     float thresh = 0.5;
     bool dont_show = false;
     std::string save_dir;
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-    std::string alphapose_model;
-#endif // INFERENCE_ALPHAPOSE_TORCH
     ParseCommandLine(argc, argv, weights_file, names_file, cfg_file
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
@@ -518,9 +531,6 @@ int main(int argc, char **argv)
     cfg->iou_with_distance = false;
     bool dont_show = false;
     std::string save_dir;
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-    std::string alphapose_model;
-#endif // INFERENCE_ALPHAPOSE_TORCH
     ParseCommandLine(argc, argv, cfg, dont_show, save_dir
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
@@ -561,6 +571,9 @@ int main(int argc, char **argv)
     while (1)
     {
         std::string command;
+#ifdef JSON
+        nlohmann::json j;
+#endif // JSON
         std::cout << "Enter COMMAND:" << std::endl;
         std::cout.flush();
         std::cin >> command;
@@ -601,7 +614,9 @@ int main(int argc, char **argv)
         std::cout << "[DEBUG] " << p_data.uuid << "\t" << p_data.cap_frame.size << std::endl;
 #endif // DEBUG
         std::cout << "[FILENAME] " << (write_result ? p_data.uuid : "") << std::endl;
-
+#ifdef JSON
+        j["filename"] = write_result ? p_data.uuid : "";
+#endif // JSON
 #ifdef INFERENCE_DARKNET
         for (const std::pair<const int, std::vector<bbox_t>> &_pair : p_data.result)
         {
@@ -619,6 +634,7 @@ int main(int argc, char **argv)
             {
                 int x_left = (rect.x < 0) ? 0 : rect.x;
                 int y_top = (rect.y < 0) ? 0 : rect.y;
+#ifndef JSON
                 std::cout << "[CAM] " << cam << "\t"
                           << obj_names[rect.obj_id]
                           << "\t" << static_cast<int>(rect.prob * 100) << "%\t"
@@ -628,6 +644,7 @@ int main(int argc, char **argv)
                           << "   height:  " << static_cast<int>(rect.h)
                           << std::endl;
                 std::cout.flush();
+#endif // !JSON
 #ifdef DEBUG
                 std::ostringstream os;
                 os << "cam:" << cam << "  classes:" << obj_names[rect.obj_id] << "  x:" << rect.x << "  y:" << rect.y << "  w:" << rect.w << "  h:" << rect.h << "  prob:" << rect.prob;
@@ -659,8 +676,19 @@ int main(int argc, char **argv)
             al->predict(roi, inputPose, pKps);
             al->draw(roi, pKps);
 #endif // INFERENCE_ALPHAPOSE_TORCH
+#ifdef JSON
+            std::ostringstream os;
+            os << "CAM" << cam;
+            j[os.str()] = M::res_to_json(result
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                                         ,
+                                         pKps
+#endif // INFERENCE_ALPHAPOSE_TORCH
+            );
+#endif // JSON
         }
 #else
+
         for (const std::pair<const int, std::vector<YOLOv4::DetectRes>> &_pair : p_data.result)
         {
             int cam = _pair.first;
@@ -679,6 +707,7 @@ int main(int argc, char **argv)
                 x_left = (x_left < 0) ? 0 : x_left;
                 int y_top = rect.y - rect.h / 2;
                 y_top = (y_top < 0) ? 0 : y_top;
+#ifndef JSON
                 std::cout << "[CAM] " << cam << "\t"
                           << yolo->detect_labels[rect.classes]
                           << "\t" << static_cast<int>(rect.prob * 100) << "%\t"
@@ -688,6 +717,7 @@ int main(int argc, char **argv)
                           << "   height:  " << static_cast<int>(rect.h)
                           << std::endl;
                 std::cout.flush();
+#endif // JSON
 #ifdef DEBUG
                 std::ostringstream os;
                 os << "cam:" << cam << "  classes:" << rect.classes << "  x:" << rect.x << "  y:" << rect.y << "  w:" << rect.w << "  h:" << rect.h << "  prob:" << rect.prob;
@@ -719,9 +749,22 @@ int main(int argc, char **argv)
             al->predict(roi, inputPose, pKps);
             al->draw(roi, pKps);
 #endif // INFERENCE_ALPHAPOSE_TORCH
+#ifdef JSON
+            std::ostringstream os;
+            os << "CAM" << cam;
+            j[os.str()] = M::res_to_json(result
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                                         ,
+                                         pKps
+#endif // INFERENCE_ALPHAPOSE_TORCH
+            );
+#endif // JSON
         }
 #endif // INFERENCE_DARKNET
-
+#ifdef JSON
+        std::cout << j << std::endl;
+        std::cout.flush();
+#endif // JSON
         cv::resize(p_data.cap_frame, display_frame, cv::Size(1600, 900));
         if (!dont_show)
         {

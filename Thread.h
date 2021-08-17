@@ -3,6 +3,7 @@
 
 // #define INFERENCE_DARKNET
 // #define INFERENCE_ALPHAPOSE_TORCH
+// #define JSON
 
 // #define INFERENCE_VIDEO
 // #define TENSORRT_API
@@ -30,13 +31,82 @@
 #else
 #include "Yolov4.h"
 #endif // INFERENCE_DARKNET
-
+#ifdef JSON
+#include "json.hpp"
+#endif // JSON
 #ifdef INFERENCE_ALPHAPOSE_TORCH
 #include "AlphaPose.h"
 #endif // INFERENCE_ALPHAPOSE_TORCH
 
 namespace M
 {
+#ifdef JSON
+#ifdef INFERENCE_DARKNET
+    nlohmann::json bbox_to_json(bbox_t &res)
+    {
+        nlohmann::json j;
+        j["bbox"] = nlohmann::json::array({res.x, res.y, res.w, res.h});
+        j["cls"] = res.obj_id;
+        j["prob"] = res.prob;
+#ifdef DEBUG
+        std::cout << "[DEBUG][JSON] " << j << std::endl;
+#endif // DEBUG
+        return j;
+    }
+#else
+    nlohmann::json bbox_to_json(YOLOv4::DetectRes &res)
+    {
+        nlohmann::json j;
+        j["bbox"] = nlohmann::json::array({res.x - res.w / 2, res.y - res.h / 2, res.w, res.h});
+        j["cls"] = res.classes;
+        j["prob"] = res.prob;
+#ifdef DEBUG
+        std::cout << "[DEBUG][JSON] " << j << std::endl;
+#endif // DEBUG
+        return j;
+    }
+#endif // INFERENCE_DARKNET
+
+#ifdef INFERENCE_DARKNET
+    nlohmann::json res_to_json(std::vector<bbox_t> &vecBBox
+#else
+    nlohmann::json res_to_json(std::vector<YOLOv4::DetectRes> &vecBBox
+#endif // INFERENCE_DARKNET
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+                           ,
+                           std::vector<PoseKeypoints> &vecKp
+#endif // INFERENCE_ALPHAPOSE_TORCH
+    )
+    {
+        nlohmann::json j = {};
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+        int countKp = 0;
+#endif // INFERENCE_ALPHAPOSE_TORCH
+        for (int i = 0; i < vecBBox.size(); i++)
+        {
+            nlohmann::json jx;
+            jx["det"] = bbox_to_json(vecBBox[i]);
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+#ifdef INFERENCE_DARKNET
+            if (vecBBox[i].obj_id > 4)
+#else
+            if (vecBBox[i].classes > 4)
+#endif // INFERENCE_DARKNET
+            {
+                jx["pose"] = nlohmann::json::value_t::null;
+            }
+            else
+            {
+                jx["pose"] = vecKp[countKp].to_json();
+                countKp++;
+            }
+#endif // INFERENCE_ALPHAPOSE_TORCH
+            j.push_back(jx);
+        }
+        return j;
+    }
+#endif // JSON
+
 #ifdef INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
     void convert_DetectRes_bbox(const bbox_t &res, bbox &out)

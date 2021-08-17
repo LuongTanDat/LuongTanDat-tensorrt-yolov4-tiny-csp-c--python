@@ -17,6 +17,7 @@ option(FOUR_CAMS "capture from four sources" OFF)
 option(SINGLE_CAM "capture from single source" OFF)
 option(CAM_ID_EXAMPLES "Open cam 0 1 2 3" OFF)
 option(VIDEO_EXAMPLES "Open example video 0 1 2 3" OFF)
+option(JSON "convert output to json" OFF)
 
 if (INFERENCE_VIDEO)
     add_definitions(-DINFERENCE_VIDEO)
@@ -49,6 +50,10 @@ endif (CAM_ID_EXAMPLES)
 if (VIDEO_EXAMPLES)
     add_definitions(-DVIDEO_EXAMPLES)
 endif (VIDEO_EXAMPLES)
+
+if (JSON)
+    add_definitions(-DJSON)
+endif (JSON)
 
 set(LIB ${LIB} -lboost_system -lboost_thread)
 
