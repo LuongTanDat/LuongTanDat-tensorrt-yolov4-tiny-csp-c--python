@@ -8,16 +8,16 @@ set(APP Nobi_App)
 # set(CMAKE_PREFIX_PATH /usr/local/libtorch)
 
 option(INFERENCE_DARKNET "INFERENCE_DARKNET" OFF)
-option(INFERENCE_ALPHAPOSE_TORCH "INFERENCE_ALPHAPOSE_TORCH" OFF)
+option(INFERENCE_ALPHAPOSE_TORCH "INFERENCE_ALPHAPOSE_TORCH" ON)
 option(INFERENCE_VIDEO "Inference videos in realtime" OFF)
-option(TENSORRT_API "TensorRT API binding python" OFF)
+option(TENSORRT_API "TensorRT API binding python" ON)
 option(NOBI_CAMERA_AI_API "TensorRT integrate Nobi's Camera AI" OFF)
 option(DEBUG "Logging" OFF)
 option(FOUR_CAMS "capture from four sources" OFF)
 option(SINGLE_CAM "capture from single source" OFF)
 option(CAM_ID_EXAMPLES "Open cam 0 1 2 3" OFF)
 option(VIDEO_EXAMPLES "Open example video 0 1 2 3" OFF)
-option(JSON "convert output to json" OFF)
+option(JSON "convert output to json" ON)
 
 if (INFERENCE_VIDEO)
     add_definitions(-DINFERENCE_VIDEO)
@@ -69,11 +69,8 @@ set(INC ${INC} ${OpenCV_INCLUDE_DIRS})
 
 find_package(Boost REQUIRED)
 
-if (FOUR_CAMS OR SINGLE_CAM)
-    set(SRC ${SRC} VideoCapture.cpp)
-else()
-    set(SRC ${SRC} main.cpp)
-endif(FOUR_CAMS OR SINGLE_CAM)
+
+set(SRC ${SRC} main.cpp glob.cpp)
 
 # Torch
 if (INFERENCE_ALPHAPOSE_TORCH)

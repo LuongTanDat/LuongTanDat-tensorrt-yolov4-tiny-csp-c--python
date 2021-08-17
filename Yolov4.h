@@ -7,6 +7,7 @@
 #include <cuda_runtime_api.h>
 #include <numeric>
 #include <fstream>
+#include <cstring>
 #include "dirent.h"
 #include "NvOnnxParser.h"
 #include "logging.h"
@@ -45,6 +46,7 @@ public:
         float w;
         float h;
         float prob;
+        float feature[7];
     };
     std::map<int, std::string> detect_labels;
     YOLOv4(Config *config);

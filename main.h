@@ -47,129 +47,6 @@ std::string gen_uuid(std::string prefix, std::string postfix)
     return id;
 }
 
-#ifdef INFERENCE_DARKNET
-void ShowHelpAndExit(const char *szBadOption = NULL)
-{
-    bool bThrowError = false;
-    std::ostringstream oss;
-    if (szBadOption)
-    {
-        bThrowError = true;
-        oss << "Error parsing \"" << szBadOption << "\"" << std::endl;
-    }
-    oss << "Options:" << std::endl
-        << "    --weights-file  : Weights model" << std::endl
-        << "    --cfg-file      : .cfg file" << std::endl
-        << "    --names-file    : .names file" << std::endl
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-        << "    --alphapose-jit : Alphapose torchscript model" << std::endl
-#endif // INFERENCE_ALPHAPOSE_TORCH
-#ifdef NOBI_CAMERA_AI_API
-        << "    --save-dir      : Path to folder contain images" << std::endl
-#endif // NOBI_CAMERA_AI_API
-        << "    --thresh        : object threshold" << std::endl
-        << "    --dont-show     : del show image by opencv" << std::endl;
-    oss << std::endl;
-    if (bThrowError)
-    {
-        throw std::invalid_argument(oss.str());
-    }
-}
-
-void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-                      ,
-                      std::string &alphapose_model
-#endif // INFERENCE_ALPHAPOSE_TORCH
-#ifdef NOBI_CAMERA_AI_API
-                      ,
-                      std::string &save_dir
-#endif // NOBI_CAMERA_AI_API
-                      ,
-                      float &thresh, bool &dont_show)
-{
-    int i;
-    for (i = 1; i < argc; i++)
-    {
-        if (std::string(argv[i]) == std::string("--help"))
-        {
-            ShowHelpAndExit();
-        }
-        else if (std::string(argv[i]) == std::string("--weights-file"))
-        {
-            if (++i == argc)
-                ShowHelpAndExit("--weights-file");
-            else
-                weights_file = std::string(argv[i]);
-            continue;
-        }
-#ifdef NOBI_CAMERA_AI_API
-        else if (std::string(argv[i]) == std::string("--save-dir"))
-        {
-            if (++i == argc)
-                ShowHelpAndExit("--save-dir");
-            else
-                save_dir = std::string(argv[i]);
-            continue;
-        }
-#endif // NOBI_CAMERA_AI_API
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-        else if (std::string(argv[i]) == std::string("--alphapose-jit"))
-        {
-            if (++i == argc)
-                ShowHelpAndExit("--alphapose-jit");
-            else
-                alphapose_model = std::string(argv[i]);
-            continue;
-        }
-#endif // INFERENCE_ALPHAPOSE_TORCH
-        else if (std::string(argv[i]) == std::string("--names-file"))
-        {
-            if (++i == argc)
-                ShowHelpAndExit("--names-file");
-            else
-                names_file = std::string(argv[i]);
-            continue;
-        }
-        else if (std::string(argv[i]) == std::string("--cfg-file"))
-        {
-            if (++i == argc)
-                ShowHelpAndExit("--cfg-file");
-            else
-                cfg_file = std::string(argv[i]);
-            continue;
-        }
-        else if (std::string(argv[i]) == std::string("--thresh"))
-        {
-            if (++i == argc)
-                ShowHelpAndExit("--thresh");
-            else
-                thresh = std::stof(argv[i]);
-            continue;
-        }
-        else if (std::string(argv[i]) == std::string("--dont-show"))
-        {
-            dont_show = true;
-            continue;
-        }
-        else
-        {
-            ShowHelpAndExit((std::string("input not include ") + std::string(argv[i])).c_str());
-        }
-    }
-}
-
-std::vector<std::string> objects_names_from_file(std::string const filename)
-{
-    std::ifstream file(filename);
-    std::vector<std::string> file_lines;
-    if (!file.is_open())
-        return file_lines;
-    for (std::string line; getline(file, line);)
-        file_lines.push_back(line);
-    return file_lines;
-}
-#else
 void ShowHelpAndExit(const char *szBadOption = NULL)
 {
     bool bThrowError = false;
@@ -200,16 +77,7 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
     }
 }
 
-void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
-#ifdef NOBI_CAMERA_AI_API
-                      ,
-                      std::string &save_dir
-#endif // NOBI_CAMERA_AI_API
-#ifdef INFERENCE_ALPHAPOSE_TORCH
-                      ,
-                      std::string &alphapose_model
-#endif // INFERENCE_ALPHAPOSE_TORCH
-)
+void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show, std::string &save_dir, std::string &alphapose_model)
 {
     int i;
 
@@ -227,7 +95,6 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
                 config->engine_file = std::string(argv[i]);
             continue;
         }
-#ifdef NOBI_CAMERA_AI_API
         else if (std::string(argv[i]) == std::string("--save-dir"))
         {
             if (++i == argc)
@@ -236,8 +103,6 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
                 save_dir = std::string(argv[i]);
             continue;
         }
-#endif // NOBI_CAMERA_AI_API
-#ifdef INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--alphapose-jit"))
         {
             if (++i == argc)
@@ -246,7 +111,6 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
                 alphapose_model = std::string(argv[i]);
             continue;
         }
-#endif // INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--label-file"))
         {
             if (++i == argc)
@@ -320,7 +184,6 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
         }
     }
 }
-#endif // INFERENCE_DARKNET
 
 // /mnt/1882C07482C05840/TensorRT/scaled-c++/build/Yolov4_trt --engine-file "/mnt/1882C07482C05840/TensorRT/model-zoo/yolov4-csp/yolov4-csp-512.engine" \
 --label-file "/mnt/1882C07482C05840/TensorRT/model-zoo/yolov4-csp/yolov4-csp-512.names" \
