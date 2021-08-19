@@ -45,6 +45,11 @@ public:
         float w;
         float h;
         float prob;
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+#ifdef INFERENCE_TABULAR_TORCH
+        float feature[7];
+#endif // INFERENCE_TABULAR_TORCH
+#endif  // INFERENCE_ALPHAPOSE_TORCH
     };
     std::map<int, std::string> detect_labels;
     YOLOv4(Config *config);
@@ -90,8 +95,6 @@ private:
     int outSize;
     std::vector<int64_t> bufferSize;
 };
-
-
 
 std::map<int, std::string> readCOCOLabel(const std::string &fileName);
 

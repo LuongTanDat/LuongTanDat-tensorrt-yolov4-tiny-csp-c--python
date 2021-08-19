@@ -7,6 +7,7 @@ export CFG="/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_
 export SAVE_DIR="/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/nobi-hw-videocapture/EMoi///"
 export ENGINE="/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine"
 export ALPHAPOSE_MODEL="/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/AlphaPose_TorchScript/model-zoo/fast_pose_res50/fast_res50_256x192.jit"
+export TABULAR_MODEL="/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_tabular_v1/tabular_v1.jit"
 ```
 
 - If you using `darknet` for detector:
@@ -17,7 +18,6 @@ make -j$(nproc)
 ```
 
 # ☆ Streamming ☆
-
 
 <details>
   <summary>BASH</summary>
@@ -84,7 +84,7 @@ cmake --build . --config Release
 ./Nobi_App
 ```
 
-## Build test object detection by TensorRT model on a sample video path like darknet, and support pose estimation
+## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_**
 
 ```bash
 rm -rf .cmake/ *
@@ -93,7 +93,7 @@ cmake --build . --config Release
 ./Nobi_App
 ```
 
-## Build test object detection by darknet C++ model on a sample video path like darknet, and support pose estimation
+## Build test object detection by darknet C++ model on a sample video path like darknet, and support **_pose estimation_**
 
 ```bash
 rm -rf .cmake/ *
@@ -109,7 +109,7 @@ cmake --build . --config Release
 <details>
   <summary>RUN WITHOUT JSON</summary>
 
-## Build test object detection by TensorRT model on a sample video path like darknet
+## Build test object detection by TensorRT model on a specific image path like darknet
 
 ```bash
 rm -rf .cmake/ *
@@ -118,7 +118,7 @@ cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
 ```
 
-## Build test object detection by darknet C++ model on a sample video path like darknet
+## Build test object detection by darknet C++ model on a specific image path like darknet
 
 ```bash
 rm -rf .cmake/ *
@@ -127,7 +127,7 @@ cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --thresh 0.7 --dont-show
 ```
 
-## Build test object detection by TensorRT model on a sample video path like darknet, and support pose estimation
+## Build test object detection by TensorRT model on a specific image path like darknet, and support **_pose estimation_**
 
 ```bash
 rm -rf .cmake/ *
@@ -136,7 +136,7 @@ cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
 ```
 
-## Build test object detection by darknet C++ model on a sample video path like darknet, and support pose estimation
+## Build test object detection by darknet C++ model on a specific image path like darknet, and support **_pose estimation_**
 
 ```bash
 rm -rf .cmake/ *
@@ -168,7 +168,7 @@ cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --thresh 0.7 --dont-show
 ```
 
-## Build test object detection by TensorRT model on a sample video path like darknet, and support pose estimation and output `Json`
+## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
@@ -177,7 +177,16 @@ cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
 ```
 
-## Build test object detection by darknet C++ model on a sample video path like darknet, and support pose estimation and output `Json`
+## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_**, **_tabular learner_** and output `Json`
+
+```bash
+rm -rf .cmake/ *
+cmake -DTENSORRT_API=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DINFERENCE_TABULAR_TORCH=ON -DJSON=ON ..
+cmake --build . --config Release
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
+```
+
+## Build test object detection by darknet C++ model on a sample video path like darknet, and support **_pose estimation_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
@@ -211,7 +220,7 @@ cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --save-dir ${SAVE_DIR} --thresh 0.7 --dont-show
 ```
 
-## Build Nobi API support object detection TensorRT and pose estimation
+## Build Nobi API support object detection TensorRT and **_pose estimation_**
 
 ```bash
 rm -rf .cmake/ *
@@ -220,7 +229,7 @@ cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
 ```
 
-## Build Nobi API support object detection darknet C++ and pose estimation
+## Build Nobi API support object detection darknet C++ and **_pose estimation_**
 
 ```bash
 rm -rf .cmake/ *
@@ -252,7 +261,7 @@ cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --save-dir ${SAVE_DIR} --thresh 0.7 --dont-show
 ```
 
-## Build Nobi API support object detection TensorRT and pose estimation and output `Json`
+## Build Nobi API support object detection TensorRT and **_pose estimation_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
@@ -261,7 +270,16 @@ cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
 ```
 
-## Build Nobi API support object detection darknet C++ and pose estimation and output `Json`
+## Build Nobi API support object detection TensorRT and **_pose estimation_**, **_tabular learner_** and output `Json`
+
+```bash
+rm -rf .cmake/ *
+cmake -DNOBI_CAMERA_AI_API=ON -DVIDEO_EXAMPLES=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DINFERENCE_TABULAR_TORCH=ON -DJSON=ON ..
+cmake --build . --config Release
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
+```
+
+## Build Nobi API support object detection darknet C++ and **_pose estimation_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
@@ -269,6 +287,5 @@ cmake -DNOBI_CAMERA_AI_API=ON -DINFERENCE_DARKNET=ON -DVIDEO_EXAMPLES=ON -DINFER
 cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --thresh 0.7 --dont-show
 ```
-
 
 </details>

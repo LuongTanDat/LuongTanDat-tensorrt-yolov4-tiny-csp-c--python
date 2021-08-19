@@ -319,6 +319,9 @@ int main(int argc, char **argv)
 {
 #ifdef INFERENCE_ALPHAPOSE_TORCH
     std::string alphapose_model;
+#ifdef INFERENCE_TABULAR_TORCH
+    std::string tabular_model;
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
     std::string weights_file;
@@ -349,6 +352,10 @@ int main(int argc, char **argv)
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
                      alphapose_model
+#ifdef INFERENCE_TABULAR_TORCH
+                     ,
+                     tabular_model
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
     );
 
@@ -357,6 +364,9 @@ int main(int argc, char **argv)
 #endif // INFERENCE_DARKNET
 #ifdef INFERENCE_ALPHAPOSE_TORCH
     AlphaPose *al = new AlphaPose(alphapose_model);
+#ifdef INFERENCE_TABULAR_TORCH && !INFERENCE_DARKNET
+    Tabular *tab = new Tabular(tabular_model);
+#endif // INFERENCE_TABULAR_TORCH && !INFERENCE_DARKNET
 #endif // INFERENCE_ALPHAPOSE_TORCH
     while (1)
     {
@@ -427,9 +437,8 @@ int main(int argc, char **argv)
                       << "   height:  " << static_cast<int>(rect.h)
                       << std::endl;
             std::cout.flush();
-#endif // !JSON
-
-            // if (!dont_show)
+#endif // !JSON \
+       // if (!dont_show)
             {
                 char t[256];
                 sprintf(t, "%.2f", rect.prob);
@@ -454,14 +463,23 @@ int main(int argc, char **argv)
         std::vector<PoseKeypoints> pKps;
         al->predict(image, inputPose, pKps);
         al->draw(image, pKps);
+#ifdef INFERENCE_TABULAR_TORCH
+        std::vector<int> tabular_pred;
+        tab->predict(inputPose, pKps, tabular_pred);
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef JSON
-        std::cout << M::res_to_json(result
+        std::cout << "[JSON] " << M::res_to_json(result
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                    ,
-                                    pKps
+                                                 ,
+                                                 pKps
+#ifdef INFERENCE_TABULAR_TORCH
+                                                 ,
+                                                 tabular_pred
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
-                                    )
+                                                 )
+                                      .dump(3)
                   << std::endl;
         std::cout.flush();
 #endif // JSON
@@ -503,6 +521,9 @@ int main(int argc, char **argv)
 {
 #ifdef INFERENCE_ALPHAPOSE_TORCH
     std::string alphapose_model;
+#ifdef INFERENCE_TABULAR_TORCH
+    std::string tabular_model;
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
     std::string weights_file;
@@ -535,6 +556,10 @@ int main(int argc, char **argv)
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
                      alphapose_model
+#ifdef INFERENCE_TABULAR_TORCH
+                     ,
+                     tabular_model
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
     );
 #ifdef DEBUG
@@ -547,6 +572,9 @@ int main(int argc, char **argv)
 #endif // INFERENCE_DARKNET
 #ifdef INFERENCE_ALPHAPOSE_TORCH
     AlphaPose *al = new AlphaPose(alphapose_model);
+#ifdef INFERENCE_TABULAR_TORCH && !INFERENCE_DARKNET
+    Tabular *tab = new Tabular(tabular_model);
+#endif // INFERENCE_TABULAR_TORCH && !INFERENCE_DARKNET
 #endif // INFERENCE_ALPHAPOSE_TORCH
 
     std::vector<M::StreamSource<TYPE>> sources;
@@ -748,6 +776,10 @@ int main(int argc, char **argv)
             std::vector<PoseKeypoints> pKps;
             al->predict(roi, inputPose, pKps);
             al->draw(roi, pKps);
+#ifdef INFERENCE_TABULAR_TORCH
+            std::vector<int> tabular_pred;
+            tab->predict(inputPose, pKps, tabular_pred);
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef JSON
             std::ostringstream os;
@@ -756,13 +788,22 @@ int main(int argc, char **argv)
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                                          ,
                                          pKps
+#ifdef INFERENCE_TABULAR_TORCH
+                                         ,
+                                         tabular_pred
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
             );
 #endif // JSON
         }
 #endif // INFERENCE_DARKNET
 #ifdef JSON
-        std::cout << j << std::endl;
+        std::string json_file = write_result ? p_data.uuid : "";
+        mreplace(json_file, ".jpg", ".json");
+        std::ofstream file(json_file);
+        file << j.dump(3);
+        file.close();
+        // std::cout << "[JSON] " << j << std::endl;
         std::cout.flush();
 #endif // JSON
         cv::resize(p_data.cap_frame, display_frame, cv::Size(1600, 900));

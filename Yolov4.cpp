@@ -155,6 +155,9 @@ std::vector<YOLOv4::DetectRes> YOLOv4::postProcess(cv::Mat &src_img, float *outp
         auto *row = result_matrix.ptr<float>(row_num);
         auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
         box.prob = sigmoid(row[4]) * sigmoid(row[max_pos - row]);
+#ifdef INFERENCE_ALPHAPOSE_TORCH && INFERENCE_TABULAR_TORCH
+        memcpy((void *)box.feature, (void *)(row + 5), CATEGORY * sizeof(float));
+#endif // INFERENCE_ALPHAPOSE_TORCH && INFERENCE_TABULAR_TORCH
         if (box.prob < obj_threshold)
             continue;
         box.classes = max_pos - row - 5;

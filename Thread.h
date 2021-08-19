@@ -3,6 +3,7 @@
 
 // #define INFERENCE_DARKNET
 // #define INFERENCE_ALPHAPOSE_TORCH
+// #define INFERENCE_TABULAR_TORCH
 // #define JSON
 
 // #define INFERENCE_VIDEO
@@ -36,6 +37,9 @@
 #endif // JSON
 #ifdef INFERENCE_ALPHAPOSE_TORCH
 #include "AlphaPose.h"
+#ifdef INFERENCE_TABULAR_TORCH
+#include "Tabular.h"
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 
 namespace M
@@ -73,8 +77,12 @@ namespace M
     nlohmann::json res_to_json(std::vector<YOLOv4::DetectRes> &vecBBox
 #endif // INFERENCE_DARKNET
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                           ,
-                           std::vector<PoseKeypoints> &vecKp
+                               ,
+                               std::vector<PoseKeypoints> &vecKp
+#ifdef INFERENCE_TABULAR_TORCH
+                               ,
+                               std::vector<int32_t> tabular_pred
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
     )
     {
@@ -98,6 +106,9 @@ namespace M
             else
             {
                 jx["pose"] = vecKp[countKp].to_json();
+#ifdef INFERENCE_TABULAR_TORCH
+                jx["tab"] = tabular_pred[countKp];
+#endif // INFERENCE_TABULAR_TORCH
                 countKp++;
             }
 #endif // INFERENCE_ALPHAPOSE_TORCH
@@ -120,6 +131,9 @@ namespace M
 #else
         out.rect.x = (float)(res.x - res.w / 2);
         out.rect.y = (float)(res.y - res.h / 2);
+#ifdef INFERENCE_TABULAR_TORCH
+        memcpy(out.feat, res.feature, 7 * sizeof(float));
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_DARKNET
         out.rect.width = (float)res.w;
         out.rect.height = (float)res.h;

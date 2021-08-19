@@ -186,6 +186,9 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
         << "    --type-yolo     : yolov4/csp/tiny" << std::endl
 #ifdef INFERENCE_ALPHAPOSE_TORCH
         << "    --alphapose-jit : Alphapose torchscript model" << std::endl
+#ifdef INFERENCE_TABULAR_TORCH
+        << "    --tabular-jit   : Tabular learner torchscript model" << std::endl
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef NOBI_CAMERA_AI_API
         << "    --save-dir      : Path to folder contain images" << std::endl
@@ -208,6 +211,10 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                       ,
                       std::string &alphapose_model
+#ifdef INFERENCE_TABULAR_TORCH
+                      ,
+                      std::string &tabular_model
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 )
 {
@@ -246,6 +253,16 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
                 alphapose_model = std::string(argv[i]);
             continue;
         }
+#ifdef INFERENCE_TABULAR_TORCH
+        else if (std::string(argv[i]) == std::string("--tabular-jit"))
+        {
+            if (++i == argc)
+                ShowHelpAndExit("--tabular-jit");
+            else
+                tabular_model = std::string(argv[i]);
+            continue;
+        }
+#endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--label-file"))
         {

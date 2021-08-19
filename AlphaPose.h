@@ -84,6 +84,9 @@ struct bbox
 #endif                     // INCLUDE_NLOHMANN_JSON_HPP_
     cv::Rect_<float> rect; //x y w h
     float score;
+#ifdef INFERENCE_TABULAR_TORCH
+    float feat[7];
+#endif // INFERENCE_TABULAR_TORCH
 };
 
 class AlphaPose
