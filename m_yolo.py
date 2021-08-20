@@ -10,17 +10,8 @@ from tqdm import tqdm
 import re
 import numpy as np
 
-# ./Nobi_Trt \
-#     --engine-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine" \
-#     --label-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names" \
-#     --dims 512 512 --obj-thres 0.3 --nms-thres 0.3 --type-yolo csp --dont-show
-
-# ./Nobi_Camera_AI_TensorRT \
-#     --engine-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine" \
-#     --label-file "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names" \
-#     --save-dir "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/nobi-hw-videocapture/EMoi///" \
-#     --dims 512 512 --obj-thres 0.3 --nms-thres 0.3 --type-yolo csp --dont-show
-
+# ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
+# ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --dims 512 512 --obj-thres 0.7 --nms-thres 0.7 --type-yolo csp --dont-show
 
 class YoloV4_TensorRT():
     def __init__(self, exec_file: str, engine_file: str, names_file: str, dims: Tuple, obj_thres=0.5, nms_thres=0.45, type_yolo="csp"):

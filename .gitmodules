@@ -1,0 +1,3 @@
+[submodule "AlphaPose-Cpp"]
+	path = AlphaPose-Cpp
+	url = git@github.com:LuongTanDat/AlphaPose-Cpp.git
