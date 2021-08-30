@@ -1124,4 +1124,5 @@ if __name__ == '__main__':
     main(cfg_file=args.cfg_file, weights_file=args.weights_file, output_file=args.output_file, strides=args.strides,
          neck=args.neck)
 
-
+# python darknet2onnx.py --cfg_file /mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v3/scaled_nobi_pose_v3.cfg --weights_file /mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v3/scaled_nobi_pose_v3.weights --output_file /mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v3/scaled_nobi_pose_v3.onnx --strides 8 16 32 --neck 'PAN'
+# ./trtexec --onnx=nobi_model_v3/scaled_nobi_pose_v3.onnx --saveEngine=nobi_model_v3/scaled_nobi_pose_v3.trt --fp16 --workspace=3000  --explicitBatch

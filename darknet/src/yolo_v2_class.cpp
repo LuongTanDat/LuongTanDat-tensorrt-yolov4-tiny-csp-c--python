@@ -21,6 +21,7 @@ extern "C"
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <iomanip>
 #include <cmath>
 
 #define NFRAMES 3
@@ -317,7 +318,6 @@ LIB_API std::vector<bbox_t> Detector::detect(image_t img, float thresh, bool use
     im.data = img.data;
     im.h = img.h;
     im.w = img.w;
-
     image sized;
 
     if (net.w == im.w && net.h == im.h)
@@ -340,7 +340,9 @@ LIB_API std::vector<bbox_t> Detector::detect(image_t img, float thresh, bool use
     layer l = net.layers[net.n - 1];
 
     float *X = sized.data;
+
     float *prediction = network_predict(net, X);
+
     if (use_mean)
     {
         memcpy(detector_gpu.predictions[detector_gpu.demo_index], prediction, l.outputs * sizeof(float));

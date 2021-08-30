@@ -7,6 +7,7 @@
 #include <cuda_runtime_api.h>
 #include <numeric>
 #include <fstream>
+#include <iostream>
 #include "dirent.h"
 #include "NvOnnxParser.h"
 #include "logging.h"
@@ -89,6 +90,7 @@ private:
     std::vector<std::vector<int>> anchors;
     std::vector<std::vector<int>> grids;
     bool iou_with_distance;
+    int x_offset, y_offset;
 
     void *buffers[2];
     cudaStream_t stream;

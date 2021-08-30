@@ -489,7 +489,10 @@ int main(int argc, char **argv)
             char c = (char)cv::waitKey(0);
         }
         else
+        {
+            cv::imwrite(gen_uuid("./", ".jpg"), image);
             cv::imwrite("result.jpg", image);
+        }
         image.release();
     }
     return 0;

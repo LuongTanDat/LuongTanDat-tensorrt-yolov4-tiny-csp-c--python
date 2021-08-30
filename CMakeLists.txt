@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(GCC_CXX_FLAGS "${GCC_CXX_FLAGS} -lboost_system -lboost_thread")
 set(APP Nobi_App)
 # set(CMAKE_PREFIX_PATH /usr/local/libtorch)
+# set(CMAKE_PREFIX_PATH /usr)
 
 option(INFERENCE_DARKNET "INFERENCE_DARKNET" OFF)
 option(INFERENCE_ALPHAPOSE_TORCH "INFERENCE_ALPHAPOSE_TORCH" OFF)
