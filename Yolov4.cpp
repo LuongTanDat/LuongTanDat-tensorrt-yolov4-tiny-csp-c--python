@@ -16,7 +16,7 @@ YOLOv4::YOLOv4(Config *config)
     anchors = config->anchors;
     if (this->model_name == std::string("csp"))
     {
-        this->iou_with_distance = false;
+        this->iou_with_distance = true;
     }
     else
     {
