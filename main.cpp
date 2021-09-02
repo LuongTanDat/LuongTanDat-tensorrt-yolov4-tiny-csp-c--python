@@ -36,9 +36,16 @@ std::atomic<int> fps_det_counter(0);
 int main()
 {
 #ifdef INFERENCE_DARKNET
-    std::string names_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names";
-    std::string cfg_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.cfg";
-    std::string weights_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.weights";
+    std::string names_file, cfg_file, weights_file;
+    if (const char *env_p = std::getenv("WEIGHTS"))
+        names_file = env_p;
+
+    if (const char *env_p = std::getenv("CFG"))
+        cfg_file = env_p;
+
+    if (const char *env_p = std::getenv("NAMES"))
+        weights_file = env_p;
+
     float thresh = 0.5;
     Detector yolo(cfg_file, weights_file);
     std::vector<cv::String> obj_names = objects_names_from_file(names_file);
@@ -48,8 +55,14 @@ int main()
     cfg->BATCH_SIZE = 1;
     cfg->INPUT_CHANNEL = 3;
 #ifdef YOLOv4_CSP_512
-    cfg->engine_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine";
-    cfg->labels_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names";
+    if (const char *env_p = std::getenv("ENGINE"))
+        cfg->engine_file = env_p;
+
+    if (const char *env_p = std::getenv("NAMES"))
+        cfg->labels_file = env_p;
+
+    // cfg->engine_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine";
+    // cfg->labels_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names";
     cfg->IMAGE_WIDTH = 512;
     cfg->IMAGE_HEIGHT = 512;
     cfg->model = std::string("csp");
@@ -64,7 +77,10 @@ int main()
 #endif // INFERENCE_DARKNET
 
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-    AlphaPose *al = new AlphaPose("/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/AlphaPose/AlphaPose_TorchScript/model-zoo/fast_pose_res50/fast_res50_256x192.jit");
+    std::string alphapose_jit;
+    if (const char *env_p = std::getenv("ALPHAPOSE_MODEL"))
+        alphapose_jit = env_p;
+    AlphaPose *al = new AlphaPose(alphapose_jit);
 #endif // INFERENCE_ALPHAPOSE_TORCH
 
     auto timer_global_start = std::chrono::high_resolution_clock::now();
