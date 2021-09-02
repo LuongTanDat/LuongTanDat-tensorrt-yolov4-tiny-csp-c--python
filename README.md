@@ -15,6 +15,9 @@ export TABULAR_MODEL="/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_tabula
 ```bash
 cd darknet
 make -j$(nproc)
+sudo ln -sf $(readlink -f include/yolo_v2_class.hpp) /usr/local/include/yolo_v2_class.hpp
+sudo ln -sf $(readlink -f libdarknet.so) /usr/local/lib/libdarknet.so
+cd -
 ```
 
 # ☆ API like darknet ☆
