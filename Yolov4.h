@@ -7,7 +7,7 @@
 #include <cuda_runtime_api.h>
 #include <numeric>
 #include <fstream>
-#include <cstring>
+#include <iostream>
 #include "dirent.h"
 #include "NvOnnxParser.h"
 #include "logging.h"
@@ -46,7 +46,11 @@ public:
         float w;
         float h;
         float prob;
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+#ifdef INFERENCE_TABULAR_TORCH
         float feature[7];
+#endif // INFERENCE_TABULAR_TORCH
+#endif  // INFERENCE_ALPHAPOSE_TORCH
     };
     std::map<int, std::string> detect_labels;
     YOLOv4(Config *config);
@@ -86,14 +90,13 @@ private:
     std::vector<std::vector<int>> anchors;
     std::vector<std::vector<int>> grids;
     bool iou_with_distance;
+    int x_offset, y_offset;
 
     void *buffers[2];
     cudaStream_t stream;
     int outSize;
     std::vector<int64_t> bufferSize;
 };
-
-
 
 std::map<int, std::string> readCOCOLabel(const std::string &fileName);
 

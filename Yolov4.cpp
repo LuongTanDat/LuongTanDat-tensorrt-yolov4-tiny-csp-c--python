@@ -14,7 +14,14 @@ YOLOv4::YOLOv4(Config *config)
     strides = config->strides;
     num_anchors = config->num_anchors;
     anchors = config->anchors;
-    this->iou_with_distance = config->iou_with_distance;
+    if (this->model_name == std::string("csp"))
+    {
+        this->iou_with_distance = true;
+    }
+    else
+    {
+        this->iou_with_distance = false;
+    }
 
     detect_labels = readCOCOLabel(labels_file);
     CATEGORY = detect_labels.size();
@@ -90,7 +97,6 @@ std::vector<YOLOv4::DetectRes> YOLOv4::EngineInference(cv::Mat &image)
 {
     std::vector<YOLOv4::DetectRes> boxes;
     std::vector<float> curInput = prepareImage(image);
-
     if (!curInput.data())
     {
         std::cout << "prepare images ERROR!" << std::endl;
@@ -122,11 +128,13 @@ std::vector<float> YOLOv4::prepareImage(cv::Mat &img)
     if (this->model_name == std::string("csp")) // letter_box = True
     {
         float ratio = std::min(float(IMAGE_WIDTH) / float(img.cols), float(IMAGE_HEIGHT) / float(img.rows));
-        flt_img = cv::Mat::zeros(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_8UC3);
+        flt_img = cv::Mat(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_32FC3, 0.5);
         cv::Mat rsz_img;
         cv::resize(img, rsz_img, cv::Size(), ratio, ratio);
-        rsz_img.copyTo(flt_img(cv::Rect(0, 0, rsz_img.cols, rsz_img.rows)));
-        flt_img.convertTo(flt_img, CV_32FC3, 1.0 / 255);
+        rsz_img.convertTo(rsz_img, CV_32FC3, 1.0 / 255);
+        x_offset = (IMAGE_WIDTH - rsz_img.cols) / 2;
+        y_offset = (IMAGE_HEIGHT - rsz_img.rows) / 2;
+        rsz_img.copyTo(flt_img(cv::Rect(x_offset, y_offset, rsz_img.cols, rsz_img.rows)));
     }
     else
     {
@@ -155,7 +163,11 @@ std::vector<YOLOv4::DetectRes> YOLOv4::postProcess(cv::Mat &src_img, float *outp
         auto *row = result_matrix.ptr<float>(row_num);
         auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
         box.prob = sigmoid(row[4]) * sigmoid(row[max_pos - row]);
+#ifdef INFERENCE_ALPHAPOSE_TORCH
+#ifdef INFERENCE_TABULAR_TORCH
         memcpy((void *)box.feature, (void *)(row + 5), CATEGORY * sizeof(float));
+#endif // INFERENCE_TABULAR_TORCH
+#endif // INFERENCE_ALPHAPOSE_TORCH
         if (box.prob < obj_threshold)
             continue;
         box.classes = max_pos - row - 5;
@@ -164,8 +176,8 @@ std::vector<YOLOv4::DetectRes> YOLOv4::postProcess(cv::Mat &src_img, float *outp
         if (this->model_name == std::string("csp"))
         {
             float ratio = std::max(float(src_img.cols) / float(IMAGE_WIDTH), float(src_img.rows) / float(IMAGE_HEIGHT));
-            box.x = (float)(row[0] * 2 - 0.5 + anchor[0]) / anchor[1] * (float)IMAGE_WIDTH * ratio;
-            box.y = (float)(row[1] * 2 - 0.5 + anchor[2]) / anchor[3] * (float)IMAGE_HEIGHT * ratio;
+            box.x = (float)((row[0] * 2 - 0.5 + anchor[0]) / anchor[1] * (float)IMAGE_WIDTH - (float)x_offset) * ratio;
+            box.y = (float)((row[1] * 2 - 0.5 + anchor[2]) / anchor[3] * (float)IMAGE_HEIGHT - (float)y_offset) * ratio;
             box.w = (float)pow(row[2] * 2, 2) * anchor[4] * ratio; // ratio_w;
             box.h = (float)pow(row[3] * 2, 2) * anchor[5] * ratio; // ratio_h;
         }
