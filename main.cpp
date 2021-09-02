@@ -18,7 +18,8 @@ int main(int argc, char **argv)
     std::string names_file;
     float thresh = 0.5;
     bool dont_show = false;
-    ParseCommandLine(argc, argv, weights_file, names_file, cfg_file
+    std::string save_dir = "./";
+    ParseCommandLine(argc, argv, weights_file, names_file, cfg_file, save_dir
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
                      alphapose_model
@@ -37,7 +38,8 @@ int main(int argc, char **argv)
     cfg->anchors = std::vector<std::vector<int>>{{12, 16}, {19, 36}, {40, 28}, {36, 75}, {76, 55}, {72, 146}, {142, 110}, {192, 243}, {459, 401}};
     cfg->iou_with_distance = false;
     bool dont_show = false;
-    ParseCommandLine(argc, argv, cfg, dont_show
+    std::string save_dir = "./";
+    ParseCommandLine(argc, argv, cfg, dont_show, save_dir
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                      ,
                      alphapose_model
@@ -73,9 +75,6 @@ int main(int argc, char **argv)
         std::vector<pose_box> inputPose;
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
-#ifdef DEBUG
-        std::cout << "result.size\t" << result.size() << std::endl;
-#endif // DEBUG
         for (const bbox_t &rect : result)
         {
             int x_left = (rect.x < 0) ? 0 : rect.x;
@@ -158,19 +157,25 @@ int main(int argc, char **argv)
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef JSON
-        std::cout << "[JSON] " << M::res_to_json(result
+        nlohmann::json j = M::res_to_json(result
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                 ,
-                                                 pKps
+                                          ,
+                                          pKps
 #ifdef INFERENCE_TABULAR_TORCH
-                                                 ,
-                                                 tabular_pred
+                                          ,
+                                          tabular_pred
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
-                                                 )
-                                      .dump(3)
-                  << std::endl;
+        );
+#ifdef DEBUG
+        std::cout << "[JSON] " << j.dump(3) << std::endl;
         std::cout.flush();
+#endif //DEBUG
+        std::string json_file = gen_uuid(save_dir, ".json");
+        std::ofstream file(json_file);
+        file << j.dump(3);
+        file.close();
+        std::cout << "[LOG] Output: " << json_file << std::endl;
 #endif // JSON
         if (!dont_show)
         {
@@ -179,11 +184,18 @@ int main(int argc, char **argv)
         }
         else
         {
-            cv::imwrite(gen_uuid("./", ".jpg"), image);
-            cv::imwrite("result.jpg", image);
+#ifndef JSON
+            std::string json_file = gen_uuid(save_dir, ".jpg");
+            cv::imwrite(json_file, image);
+            std::cout << "[LOG] Output: " << json_file << std::endl;
+#else
+            mreplace(json_file, ".json", ".jpg");
+            cv::imwrite(json_file, image);
+            std::cout << "[LOG] Output: " << json_file << std::endl;
+#endif // JSON \
+    // cv::imwrite("result.jpg", image);
         }
         image.release();
     }
     return 0;
 }
-

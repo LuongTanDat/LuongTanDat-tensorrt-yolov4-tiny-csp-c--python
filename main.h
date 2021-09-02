@@ -76,7 +76,7 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
     }
 }
 
-void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file
+void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file, std::string &save_dir
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                       ,
                       std::string &alphapose_model
@@ -103,7 +103,6 @@ void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::st
                 weights_file = std::string(argv[i]);
             continue;
         }
-#ifdef NOBI_CAMERA_AI_API
         else if (std::string(argv[i]) == std::string("--save-dir"))
         {
             if (++i == argc)
@@ -112,7 +111,6 @@ void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::st
                 save_dir = std::string(argv[i]);
             continue;
         }
-#endif // NOBI_CAMERA_AI_API
 #ifdef INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--alphapose-jit"))
         {
@@ -203,11 +201,7 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
     }
 }
 
-void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
-#ifdef NOBI_CAMERA_AI_API
-                      ,
-                      std::string &save_dir
-#endif // NOBI_CAMERA_AI_API
+void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show, std::string &save_dir
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                       ,
                       std::string &alphapose_model
@@ -234,7 +228,6 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
                 config->engine_file = std::string(argv[i]);
             continue;
         }
-#ifdef NOBI_CAMERA_AI_API
         else if (std::string(argv[i]) == std::string("--save-dir"))
         {
             if (++i == argc)
@@ -243,7 +236,6 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show
                 save_dir = std::string(argv[i]);
             continue;
         }
-#endif // NOBI_CAMERA_AI_API
 #ifdef INFERENCE_ALPHAPOSE_TORCH
         else if (std::string(argv[i]) == std::string("--alphapose-jit"))
         {

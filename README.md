@@ -29,7 +29,7 @@ cd -
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON ..
+cmake ..
 cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
@@ -38,7 +38,7 @@ cmake --build . --config Release
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_DARKNET=ON ..
+cmake -DINFERENCE_DARKNET=ON ..
 cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --thresh 0.3 --dont-show
 ```
@@ -47,7 +47,7 @@ cmake --build . --config Release
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_ALPHAPOSE_TORCH=ON ..
+cmake -DINFERENCE_ALPHAPOSE_TORCH=ON ..
 cmake --build . --config Release
 ./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
@@ -56,7 +56,7 @@ cmake --build . --config Release
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_DARKNET=ON -DINFERENCE_ALPHAPOSE_TORCH=ON ..
+cmake -DINFERENCE_DARKNET=ON -DINFERENCE_ALPHAPOSE_TORCH=ON ..
 cmake --build . --config Release
 ./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --thresh 0.3 --dont-show
 ```
@@ -70,45 +70,45 @@ cmake --build . --config Release
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DJSON=ON ..
+cmake -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
 
 ## Build test object detection by darknet C++ model on a sample video path like darknet and output `Json`
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_DARKNET=ON -DJSON=ON ..
+cmake -DINFERENCE_DARKNET=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --thresh 0.3 --dont-show
+./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --save-dir ${SAVE_DIR} --thresh 0.3 --dont-show
 ```
 
 ## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DJSON=ON ..
+cmake -DINFERENCE_ALPHAPOSE_TORCH=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
 
 ## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_**, **_tabular learner_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DINFERENCE_TABULAR_TORCH=ON -DJSON=ON ..
+cmake -DINFERENCE_ALPHAPOSE_TORCH=ON -DINFERENCE_TABULAR_TORCH=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
 
 ## Build test object detection by darknet C++ model on a sample video path like darknet, and support **_pose estimation_** and output `Json`
 
 ```bash
 rm -rf .cmake/ *
-cmake -DTENSORRT_API=ON -DINFERENCE_DARKNET=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DJSON=ON ..
+cmake -DINFERENCE_DARKNET=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --thresh 0.3 --dont-show
+./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --thresh 0.3 --dont-show
 ```
 
 </details>
