@@ -62,13 +62,15 @@ int main(int argc, char **argv)
     crow::SimpleApp app;
     CROW_ROUTE(app, "/inference").methods("POST"_method)([&yolo, &dont_show
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                          ,
-                                                          &al
+                                                          , &al
 #ifdef INFERENCE_TABULAR_TORCH
-                                                          ,
-                                                          &tab
+                                                          , &tab
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
+#ifdef INFERENCE_DARKNET
+                                                          , &thresh, &obj_names
+#endif // INFERENCE_DARKNET
+
     ](const crow::request &req)
                                                          {
 #ifdef JSON

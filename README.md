@@ -30,7 +30,7 @@ cd -
 rm -rf .cmake/ *
 cmake -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --port 2210 --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
 
 ## Build test object detection by darknet C++ model on a sample video path like darknet and output `Json`
@@ -39,7 +39,7 @@ cmake --build . --config Release
 rm -rf .cmake/ *
 cmake -DINFERENCE_DARKNET=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --port 2210 --thresh 0.3 --dont-show
+./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --save-dir ${SAVE_DIR} --thresh 0.3 --dont-show
 ```
 
 ## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_** and output `Json`
@@ -48,7 +48,7 @@ cmake --build . --config Release
 rm -rf .cmake/ *
 cmake -DINFERENCE_ALPHAPOSE_TORCH=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --port 2210 --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
 
 ## Build test object detection by TensorRT model on a sample video path like darknet, and support **_pose estimation_**, **_tabular learner_** and output `Json`
@@ -57,7 +57,7 @@ cmake --build . --config Release
 rm -rf .cmake/ *
 cmake -DINFERENCE_ALPHAPOSE_TORCH=ON -DINFERENCE_TABULAR_TORCH=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --port 2210 --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
+./Nobi_App --engine-file ${ENGINE} --label-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --tabular-jit ${TABULAR_MODEL} --save-dir ${SAVE_DIR} --dims 512 512 --obj-thres 0.3 --nms-thres 0.4 --type-yolo csp --dont-show
 ```
 
 ## Build test object detection by darknet C++ model on a sample video path like darknet, and support **_pose estimation_** and output `Json`
@@ -66,7 +66,7 @@ cmake --build . --config Release
 rm -rf .cmake/ *
 cmake -DINFERENCE_DARKNET=ON -DINFERENCE_ALPHAPOSE_TORCH=ON -DJSON=ON ..
 cmake --build . --config Release
-./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --port 2210 --thresh 0.3 --dont-show
+./Nobi_App --weights-file ${WEIGHTS} --cfg-file ${CFG} --names-file ${NAMES} --alphapose-jit ${ALPHAPOSE_MODEL} --save-dir ${SAVE_DIR} --thresh 0.3 --dont-show
 ```
 
 </details>
