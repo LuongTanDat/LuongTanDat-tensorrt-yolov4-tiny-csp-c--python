@@ -70,3 +70,19 @@ cmake --build . --config Release
 ```
 
 </details>
+
+# Docker file
+
+- Build
+
+```bash
+docker build --tag hienanh/nobi-api:0.2.3 .
+```
+
+```bash
+docker run --rm --gpus all -p 2210:2210 \
+-v ${ENGINE}:/root/model-zoo/nobi.engine \
+-v ${NAMES}:/root/model-zoo/nobi.names \
+-v ${ALPHAPOSE_MODEL}:/root/model-zoo/pose.jit \
+hienanh/nobi-api:0.2.3
+```
