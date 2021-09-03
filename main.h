@@ -8,6 +8,9 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <iostream>
 #include <fstream>
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
 #include "crow_all.h"
 #include "base64.h"
 

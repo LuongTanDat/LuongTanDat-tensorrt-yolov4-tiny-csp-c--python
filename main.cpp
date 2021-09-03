@@ -60,167 +60,196 @@ int main(int argc, char **argv)
 #endif // INFERENCE_TABULAR_TORCH && !INFERENCE_DARKNET
 #endif // INFERENCE_ALPHAPOSE_TORCH
     crow::SimpleApp app;
-    CROW_ROUTE(app, "/inference").methods("POST"_method)([&yolo, &dont_show
+    CROW_ROUTE(app, "/inference").methods("GET"_method)([&yolo, &dont_show
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                          , &al
+                                                         ,
+                                                         &al
 #ifdef INFERENCE_TABULAR_TORCH
-                                                          , &tab
+                                                         ,
+                                                         &tab
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
-                                                          , &thresh, &obj_names
+                                                         ,
+                                                         &thresh, &obj_names
 #endif // INFERENCE_DARKNET
 
     ](const crow::request &req)
-                                                         {
+                                                        {
 #ifdef JSON
-                                                             nlohmann::json j = {};
+                                                            nlohmann::json j = {};
 #endif // JSON
-                                                             try
-                                                             {
-                                                                 auto args = crow::json::load(req.body);
-                                                                 std::string base64_image = args["image"].s();
-                                                                 std::string decoded_image = base64_decode(base64_image);
-                                                                 std::vector<uchar> image_data(decoded_image.begin(), decoded_image.end());
-                                                                 cv::Mat image = cv::imdecode(image_data, cv::IMREAD_UNCHANGED);
-                                                                 cv::imwrite("api.jpg", image);
+                                                            try
+                                                            {
+                                                                if (req.url_params.get("url") == nullptr)
+                                                                {
+                                                                    return crow::response(400);
+                                                                }
+                                                                else
+                                                                {
+#ifdef JSON
+                                                                    j["url"] = req.url_params.get("url");
+#endif // JSON
+                                                                }
+                                                                // That's all that is needed to do cleanup of used resources (RAII style).
+                                                                curlpp::Cleanup myCleanup;
+
+                                                                // auto args = crow::json::load(req.body);
+                                                                // std::string base64_image = args["image"].s();
+                                                                // std::string decoded_image = base64_decode(base64_image);
+                                                                // std::vector<uchar> image_data(decoded_image.begin(), decoded_image.end());
+                                                                // cv::Mat image = cv::imdecode(image_data, cv::IMREAD_UNCHANGED);
+                                                                // cv::imwrite("api.jpg", image);
+                                                                std::ostringstream oss;
+                                                                oss << curlpp::options::Url(req.url_params.get("url"));
+                                                                std::cout << oss.str().length() << std::endl;
+                                                                std::string decoded_image = oss.str();
+                                                                std::vector<uchar> image_data(decoded_image.begin(), decoded_image.end());
+                                                                cv::Mat image = cv::imdecode(image_data, cv::IMREAD_UNCHANGED);
+                                                                cv::imwrite("api.jpg", image);
             // std::string image_path;
             // std::cout << "Enter Image Path: " << std::endl;
             // std::cout.flush();
             // std::cin >> image_path;
             // cv::Mat image = cv::imread(image_path);
 #ifdef INFERENCE_DARKNET
-                                                                 std::vector<bbox_t> result = yolo.detect_cv(image, thresh, true);
+                                                                std::vector<bbox_t> result = yolo.detect_cv(image, thresh, true);
 #else
-                                                                 std::vector<YOLOv4::DetectRes> result = yolo->EngineInference(image);
+                                                                std::vector<YOLOv4::DetectRes> result = yolo->EngineInference(image);
 #endif // INFERENCE_DARKNET
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                                 std::vector<pose_box> inputPose;
+                                                                std::vector<pose_box> inputPose;
 #endif // INFERENCE_ALPHAPOSE_TORCH
 #ifdef INFERENCE_DARKNET
-                                                                 for (const bbox_t &rect : result)
-                                                                 {
-                                                                     int x_left = (rect.x < 0) ? 0 : rect.x;
-                                                                     int y_top = (rect.y < 0) ? 0 : rect.y;
+                                                                for (const bbox_t &rect : result)
+                                                                {
+                                                                    int x_left = (rect.x < 0) ? 0 : rect.x;
+                                                                    int y_top = (rect.y < 0) ? 0 : rect.y;
 #ifndef JSON
-                                                                     std::cout << obj_names[rect.obj_id] << ": " << static_cast<int>(rect.prob * 100)
-                                                                               << "%\tx_left:  " << static_cast<int>(x_left)
-                                                                               << "   y_top:  " << static_cast<int>(y_top)
-                                                                               << "   width:  " << static_cast<int>(rect.w)
-                                                                               << "   height:  " << static_cast<int>(rect.h)
-                                                                               << std::endl;
-                                                                     std::cout.flush();
+                                                                    std::cout << obj_names[rect.obj_id] << ": " << static_cast<int>(rect.prob * 100)
+                                                                              << "%\tx_left:  " << static_cast<int>(x_left)
+                                                                              << "   y_top:  " << static_cast<int>(y_top)
+                                                                              << "   width:  " << static_cast<int>(rect.w)
+                                                                              << "   height:  " << static_cast<int>(rect.h)
+                                                                              << std::endl;
+                                                                    std::cout.flush();
 #endif // !JSON
 
-                                                                     // if (!dont_show)
-                                                                     {
-                                                                         char t[256];
-                                                                         sprintf(t, "%.2f", rect.prob);
-                                                                         std::string name = obj_names[rect.obj_id] + "-" + t;
-                                                                         cv::putText(image, name, cv::Point(x_left, y_top - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, obj_id_to_color(rect.obj_id), 2);
-                                                                         cv::Rect rst(x_left, y_top, rect.w, rect.h);
-                                                                         cv::rectangle(image, rst, obj_id_to_color(rect.obj_id), 2, cv::LINE_8, 0);
-                                                                     }
+                                                                    // if (!dont_show)
+                                                                    {
+                                                                        char t[256];
+                                                                        sprintf(t, "%.2f", rect.prob);
+                                                                        std::string name = obj_names[rect.obj_id] + "-" + t;
+                                                                        cv::putText(image, name, cv::Point(x_left, y_top - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, obj_id_to_color(rect.obj_id), 2);
+                                                                        cv::Rect rst(x_left, y_top, rect.w, rect.h);
+                                                                        cv::rectangle(image, rst, obj_id_to_color(rect.obj_id), 2, cv::LINE_8, 0);
+                                                                    }
 
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                                     if (rect.obj_id > 4)
-                                                                         continue;
-                                                                     else
-                                                                     {
-                                                                         pose_box b;
-                                                                         M::convert_DetectRes_bbox(rect, b);
-                                                                         inputPose.push_back(b);
-                                                                     }
+                                                                    if (rect.obj_id > 4)
+                                                                        continue;
+                                                                    else
+                                                                    {
+                                                                        pose_box b;
+                                                                        M::convert_DetectRes_bbox(rect, b);
+                                                                        inputPose.push_back(b);
+                                                                    }
 #endif // INFERENCE_ALPHAPOSE_TORCH
-                                                                 }
+                                                                }
 #else
-                                                                 for (const YOLOv4::DetectRes &rect : result)
-                                                                 {
-                                                                     int x_left = rect.x - rect.w / 2;
-                                                                     x_left = (x_left < 0) ? 0 : x_left;
-                                                                     int y_top = rect.y - rect.h / 2;
-                                                                     y_top = (y_top < 0) ? 0 : y_top;
+                                                                for (const YOLOv4::DetectRes &rect : result)
+                                                                {
+                                                                    int x_left = rect.x - rect.w / 2;
+                                                                    x_left = (x_left < 0) ? 0 : x_left;
+                                                                    int y_top = rect.y - rect.h / 2;
+                                                                    y_top = (y_top < 0) ? 0 : y_top;
 #ifndef JSON
-                                                                     std::cout << yolo->detect_labels[rect.classes] << ": " << static_cast<int>(rect.prob * 100)
-                                                                               << "%\tx_left:  " << static_cast<int>(x_left)
-                                                                               << "   y_top:  " << static_cast<int>(y_top)
-                                                                               << "   width:  " << static_cast<int>(rect.w)
-                                                                               << "   height:  " << static_cast<int>(rect.h)
-                                                                               << std::endl;
-                                                                     std::cout.flush();
+                                                                    std::cout << yolo->detect_labels[rect.classes] << ": " << static_cast<int>(rect.prob * 100)
+                                                                              << "%\tx_left:  " << static_cast<int>(x_left)
+                                                                              << "   y_top:  " << static_cast<int>(y_top)
+                                                                              << "   width:  " << static_cast<int>(rect.w)
+                                                                              << "   height:  " << static_cast<int>(rect.h)
+                                                                              << std::endl;
+                                                                    std::cout.flush();
 #endif // !JSON \
        // if (!dont_show)
-                                                                     {
-                                                                         char t[256];
-                                                                         sprintf(t, "%.2f", rect.prob);
-                                                                         std::string name = yolo->detect_labels[rect.classes] + "-" + t;
-                                                                         cv::putText(image, name, cv::Point(rect.x - rect.w / 2, rect.y - rect.h / 2 - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, yolo->class_colors[rect.classes], 2);
-                                                                         cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
-                                                                         cv::rectangle(image, rst, yolo->class_colors[rect.classes], 2, cv::LINE_8, 0);
-                                                                     }
+                                                                    {
+                                                                        char t[256];
+                                                                        sprintf(t, "%.2f", rect.prob);
+                                                                        std::string name = yolo->detect_labels[rect.classes] + "-" + t;
+                                                                        cv::putText(image, name, cv::Point(rect.x - rect.w / 2, rect.y - rect.h / 2 - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, yolo->class_colors[rect.classes], 2);
+                                                                        cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
+                                                                        cv::rectangle(image, rst, yolo->class_colors[rect.classes], 2, cv::LINE_8, 0);
+                                                                    }
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                                     if (rect.classes > 4)
-                                                                         continue;
-                                                                     else
-                                                                     {
-                                                                         pose_box b;
-                                                                         M::convert_DetectRes_bbox(rect, b);
-                                                                         inputPose.push_back(b);
-                                                                     }
+                                                                    if (rect.classes > 4)
+                                                                        continue;
+                                                                    else
+                                                                    {
+                                                                        pose_box b;
+                                                                        M::convert_DetectRes_bbox(rect, b);
+                                                                        inputPose.push_back(b);
+                                                                    }
 #endif // INFERENCE_ALPHAPOSE_TORCH
-                                                                 }
+                                                                }
 #endif // INFERENCE_DARKNET
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                                 std::vector<PoseKeypoints> pKps;
-                                                                 al->predict(image, inputPose, pKps);
-                                                                 al->draw(image, pKps);
+                                                                std::vector<PoseKeypoints> pKps;
+                                                                al->predict(image, inputPose, pKps);
+                                                                al->draw(image, pKps);
 #ifdef INFERENCE_TABULAR_TORCH
-                                                                 std::vector<int> tabular_pred;
-                                                                 tab->predict(inputPose, pKps, tabular_pred);
+                                                                std::vector<int> tabular_pred;
+                                                                tab->predict(inputPose, pKps, tabular_pred);
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
-                                                                 if (!dont_show)
-                                                                 {
-                                                                     cv::imshow("HNIW", image);
-                                                                     char c = (char)cv::waitKey(0);
-                                                                 }
-                                                                 else
-                                                                 {
-                                                                     cv::imwrite("result.jpg", image);
-                                                                     std::cout << "[LOG] Output: result.jpg" << std::endl;
-                                                                 }
-                                                                 image.release();
+                                                                if (!dont_show)
+                                                                {
+                                                                    cv::imshow("HNIW", image);
+                                                                    char c = (char)cv::waitKey(0);
+                                                                }
+                                                                else
+                                                                {
+                                                                    cv::imwrite("result.jpg", image);
+                                                                    std::cout << "[LOG] Output: result.jpg" << std::endl;
+                                                                }
+                                                                image.release();
 #ifdef JSON
-                                                                 j["result"] = M::res_to_json(result
+                                                                j["result"] = M::res_to_json(result
 #ifdef INFERENCE_ALPHAPOSE_TORCH
-                                                                                              ,
-                                                                                              pKps
+                                                                                             ,
+                                                                                             pKps
 #ifdef INFERENCE_TABULAR_TORCH
-                                                                                              ,
-                                                                                              tabular_pred
+                                                                                             ,
+                                                                                             tabular_pred
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
-                                                                 );
-                                                                 std::ofstream file("result.json");
-                                                                 file << j.dump(3);
-                                                                 file.close();
-                                                                 std::cout << "[LOG] Output: result.json" << std::endl;
-
-                                                                 return crow::json::load(j.dump());
+                                                                );
+                                                                std::ofstream file("result.json");
+                                                                file << j.dump(3);
+                                                                file.close();
+                                                                std::cout << "[LOG] Output: result.json" << std::endl;
+                                                                std::cout << j.dump() << std::endl;
+                                                                return crow::response(200, crow::json::load(j.dump()));
 #else
-                                                                 return crow::response(200);
+                                                                return crow::response(200);
 #endif // JSON
-                                                             }
-                                                             catch (const std::exception &e)
-                                                             {
-                                                                 std::cerr << "[ERROR] " << e.what() << '\n';
-#ifdef JSON
-                                                                 return crow::json::load(j.dump(4));
-#else
-                                                                 return crow::response(500);
-#endif // JSON
-                                                             }
-                                                         });
+                                                            }
+                                                            catch (curlpp::RuntimeError &e)
+                                                            {
+                                                                std::cerr << "[ERROR] " << e.what() << std::endl;
+                                                                return crow::response(500);
+                                                            }
+                                                            catch (curlpp::LogicError &e)
+                                                            {
+                                                                std::cerr << "[ERROR] " << e.what() << std::endl;
+                                                                return crow::response(500);
+                                                            }
+                                                            catch (const std::exception &e)
+                                                            {
+                                                                std::cerr << "[ERROR] " << e.what() << std::endl;
+                                                                return crow::response(500);
+                                                            }
+                                                        });
 
     // app.port(2210).run();
     app.port(port).multithreaded().run();

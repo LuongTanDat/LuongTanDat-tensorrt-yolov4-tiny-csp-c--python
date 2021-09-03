@@ -19,6 +19,15 @@ endif (JSON)
 
 set(LIB ${LIB} -lboost_system -lboost_thread)
 
+# cURLpp
+find_package(CURL REQUIRED)
+set(CURL_LIBRARIES ${CURL_LIBRARIES} /usr/local/lib/libcurlpp.so)
+set(CURL_INCLUDE_DIRS ${CURL_INCLUDE_DIRS} /usr/local/include/curlpp/)
+message("CURL_LIBRARIES: " ${CURL_LIBRARIES})
+message("CURL_INCLUDE_DIRS: " ${CURL_INCLUDE_DIRS})
+set(LIB ${LIB} ${CURL_LIBRARIES})
+set(INC ${INC} ${CURL_INCLUDE_DIRS})
+
 # CUDA
 find_package(CUDA REQUIRED)
 set(LIB ${LIB} ${CUDA_LIBRARIES})
