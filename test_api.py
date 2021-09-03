@@ -1,13 +1,6 @@
 import requests
 import json
 import base64
-from base64 import b64encode
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
-import aiohttp
-import time
-import numpy as np
-
 
 URL = "http://localhost:2210/inference"
 image_path = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/Nobi-raw-image/c58ded9ef3db4134a5a3c11c17165d83.jpg"
@@ -20,3 +13,4 @@ def test_api2():
 
 if __name__ == "__main__":
     test_api2()
+
