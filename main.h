@@ -8,6 +8,8 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <iostream>
 #include <fstream>
+#include "crow_all.h"
+#include "base64.h"
 
 void mreplace(std::string &input, std::string sub_string, std::string new_string, int count = -1);
 void mreplace(std::string &input, std::string sub_string, std::string new_string, int count)
@@ -64,9 +66,7 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
 #ifdef INFERENCE_ALPHAPOSE_TORCH
         << "    --alphapose-jit : Alphapose torchscript model" << std::endl
 #endif // INFERENCE_ALPHAPOSE_TORCH
-#ifdef NOBI_CAMERA_AI_API
-        << "    --save-dir      : Path to folder contain images" << std::endl
-#endif // NOBI_CAMERA_AI_API
+        << "    --port          : PORT" << std::endl
         << "    --thresh        : object threshold" << std::endl
         << "    --dont-show     : del show image by opencv" << std::endl;
     oss << std::endl;
@@ -76,15 +76,11 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
     }
 }
 
-void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file, std::string &save_dir
+void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::string &names_file, std::string &cfg_file, unsigned int &port
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                       ,
                       std::string &alphapose_model
 #endif // INFERENCE_ALPHAPOSE_TORCH
-#ifdef NOBI_CAMERA_AI_API
-                      ,
-                      std::string &save_dir
-#endif // NOBI_CAMERA_AI_API
                       ,
                       float &thresh, bool &dont_show)
 {
@@ -103,12 +99,13 @@ void ParseCommandLine(int argc, char *argv[], std::string &weights_file, std::st
                 weights_file = std::string(argv[i]);
             continue;
         }
-        else if (std::string(argv[i]) == std::string("--save-dir"))
+
+        else if (std::string(argv[i]) == std::string("--port"))
         {
             if (++i == argc)
-                ShowHelpAndExit("--save-dir");
+                ShowHelpAndExit("--port");
             else
-                save_dir = std::string(argv[i]);
+                port = std::stoi(argv[i]);
             continue;
         }
 #ifdef INFERENCE_ALPHAPOSE_TORCH
@@ -188,9 +185,7 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
         << "    --tabular-jit   : Tabular learner torchscript model" << std::endl
 #endif // INFERENCE_TABULAR_TORCH
 #endif // INFERENCE_ALPHAPOSE_TORCH
-#ifdef NOBI_CAMERA_AI_API
-        << "    --save-dir      : Path to folder contain images" << std::endl
-#endif
+        << "    --port          : PORT" << std::endl
         << "    --obj-thres     : object threshold" << std::endl
         << "    --nms-thres     : non maximize suppressor threshold" << std::endl
         << "    --dont-show     : del show image by opencv" << std::endl;
@@ -201,7 +196,7 @@ void ShowHelpAndExit(const char *szBadOption = NULL)
     }
 }
 
-void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show, std::string &save_dir
+void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show, unsigned int &port
 #ifdef INFERENCE_ALPHAPOSE_TORCH
                       ,
                       std::string &alphapose_model
@@ -228,12 +223,12 @@ void ParseCommandLine(int argc, char *argv[], Config *config, bool &dont_show, s
                 config->engine_file = std::string(argv[i]);
             continue;
         }
-        else if (std::string(argv[i]) == std::string("--save-dir"))
+        else if (std::string(argv[i]) == std::string("--port"))
         {
             if (++i == argc)
-                ShowHelpAndExit("--save-dir");
+                ShowHelpAndExit("--port");
             else
-                save_dir = std::string(argv[i]);
+                port = std::stoi(argv[i]);
             continue;
         }
 #ifdef INFERENCE_ALPHAPOSE_TORCH

@@ -30,7 +30,7 @@ set(LIB ${LIB} ${OpenCV_LIBRARIES})
 set(INC ${INC} ${OpenCV_INCLUDE_DIRS})
 
 find_package(Boost REQUIRED)
-set(SRC ${SRC} main.cpp glob.cpp)
+set(SRC ${SRC} main.cpp glob.cpp base64.cpp)
 
 # Torch
 if (INFERENCE_ALPHAPOSE_TORCH)
