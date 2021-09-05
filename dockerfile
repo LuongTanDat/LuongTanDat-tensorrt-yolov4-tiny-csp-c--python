@@ -3,7 +3,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Install git và python==3.6
 RUN apt update && apt install --assume-yes software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa
+# RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt update && apt install --assume-yes python3.6 python3.6-dev python3-pip
 RUN ln -sfn /usr/bin/python3.6 /usr/bin/python3
 RUN ln -sfn /usr/bin/python3 /usr/bin/python
@@ -26,14 +26,14 @@ RUN apt upgrade --assume-yes
 RUN apt install --assume-yes libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
 
 # install nvtop htop
-# WORKDIR /root
-# RUN apt install cmake libncurses5-dev libncursesw5-dev git -yq
-# RUN git clone https://github.com/Syllo/nvtop.git
-# RUN mkdir -p nvtop/build && cd nvtop/build &&\
-#     cmake .. &&\
-#     make -j$(nproc) &&\
-#     make install
-# RUN apt install htop
+WORKDIR /root
+RUN apt install cmake libncurses5-dev libncursesw5-dev git -yq
+RUN git clone https://github.com/Syllo/nvtop.git
+RUN mkdir -p nvtop/build && cd nvtop/build &&\
+    cmake .. &&\
+    make -j$(nproc) &&\
+    make install
+RUN apt install htop
 
 # install TensorRT
 COPY ./docker-resource/TensorRT-7.2.3.4.Ubuntu-18.04.x86_64-gnu.cuda-11.1.cudnn8.1.tar.gz /root/TensorRT-7.2.3.4.Ubuntu-18.04.x86_64-gnu.cuda-11.1.cudnn8.1.tar.gz
@@ -43,6 +43,12 @@ WORKDIR /usr/local
 RUN ln -s TensorRT-7.2.3.4 TensorRT
 
 # install opencv
+RUN apt update
+RUN apt upgrade -y
+RUN apt install build-essential cmake pkg-config unzip yasm git checkinstall libjpeg-dev libpng-dev libtiff-dev  libavcodec-dev libavformat-dev libswscale-dev libavresample-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libxvidcore-dev x264 libx264-dev libfaac-dev libmp3lame-dev libtheora-dev  libfaac-dev libmp3lame-dev libvorbis-dev libopencore-amrnb-dev libopencore-amrwb-dev libdc1394-22 libdc1394-22-dev libxine2-dev libv4l-dev v4l-utils libgtk-3-dev python3-dev python3-pip libtbb-dev libatlas-base-dev gfortran libprotobuf-dev protobuf-compiler libgoogle-glog-dev libgflags-dev libgphoto2-dev libeigen3-dev libhdf5-dev doxygen -y
+RUN pip3 install -U pip numpy
+WORKDIR /usr/include/linux
+RUN ln -s -f ../libv4l1-videodev.h videodev.h
 WORKDIR /root
 RUN export HOME=$(pwd)
 RUN git clone https://github.com/opencv/opencv.git
