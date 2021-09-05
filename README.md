@@ -70,7 +70,7 @@ cmake --build . --config Release
 
 ```bash
 rm -rf .cmake/ *
-cmake -DINFERENCE_VIDEO=ON ..
+cmake -DINFERENCE_VIDEO=ON -DVIDEO_EXAMPLES=ON ..
 cmake --build . --config Release
 ./Nobi_App
 ```

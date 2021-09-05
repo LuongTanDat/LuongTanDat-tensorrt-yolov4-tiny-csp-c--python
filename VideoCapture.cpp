@@ -47,10 +47,10 @@ int main()
 
 #ifdef VIDEO_EXAMPLES
 #define TYPE std::string
-#define SOURCE0 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_0.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE1 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_1.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE2 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_2.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE3 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_3.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE0 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_0.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE1 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_1.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE2 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_2.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE3 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_3.mp4 ! decodebin ! autovideoconvert ! appsink")
 #define BACKEND cv::CAP_GSTREAMER
 #endif // VIDEO_EXAMPLES
 

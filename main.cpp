@@ -6,10 +6,10 @@
 #ifdef INFERENCE_VIDEO
 #ifdef VIDEO_EXAMPLES
 #define TYPE std::string
-#define SOURCE0 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_0.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE1 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_1.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE2 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_2.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE3 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_3.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE0 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_0.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE1 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_1.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE2 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_2.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE3 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_3.mp4 ! decodebin ! autovideoconvert ! appsink")
 #define BACKEND cv::CAP_GSTREAMER
 #endif // VIDEO_EXAMPLES
 
@@ -36,15 +36,19 @@ std::atomic<int> fps_det_counter(0);
 int main()
 {
 #ifdef INFERENCE_DARKNET
-    std::string names_file, cfg_file, weights_file;
-    if (const char *env_p = std::getenv("WEIGHTS"))
-        names_file = env_p;
+    // std::string names_file, cfg_file, weights_file;
+    // if (const char *env_p = std::getenv("WEIGHTS"))
+    //     names_file = env_p;
 
-    if (const char *env_p = std::getenv("CFG"))
-        cfg_file = env_p;
+    // if (const char *env_p = std::getenv("CFG"))
+    //     cfg_file = env_p;
 
-    if (const char *env_p = std::getenv("NAMES"))
-        weights_file = env_p;
+    // if (const char *env_p = std::getenv("NAMES"))
+    //     weights_file = env_p;
+
+    std::string weights_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v3/scaled_nobi_pose_v3.weights";
+    std::string names_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v3/scaled_nobi_pose_v3.names";
+    std::string cfg_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v3/scaled_nobi_pose_v3.cfg";
 
     float thresh = 0.5;
     Detector yolo(cfg_file, weights_file);
@@ -55,14 +59,14 @@ int main()
     cfg->BATCH_SIZE = 1;
     cfg->INPUT_CHANNEL = 3;
 #ifdef YOLOv4_CSP_512
-    if (const char *env_p = std::getenv("ENGINE"))
-        cfg->engine_file = env_p;
+    // if (const char *env_p = std::getenv("ENGINE"))
+    //     cfg->engine_file = env_p;
 
-    if (const char *env_p = std::getenv("NAMES"))
-        cfg->labels_file = env_p;
+    // if (const char *env_p = std::getenv("NAMES"))
+    //     cfg->labels_file = env_p;
 
-    // cfg->engine_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine";
-    // cfg->labels_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names";
+    cfg->engine_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.engine";
+    cfg->labels_file = "/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/model-zoo/nobi_model_v2/scaled_nobi_pose_v2.names";
     cfg->IMAGE_WIDTH = 512;
     cfg->IMAGE_HEIGHT = 512;
     cfg->model = std::string("csp");
@@ -154,6 +158,9 @@ int main()
                     // std::shared_ptr<image_t> det_image = yolo.mat_to_image_resize(roi);
                     // std::vector<bbox_t> result = yolo.detect_resized(*det_image, roi.cols, roi.rows, thresh, true);
                     std::vector<bbox_t> result = yolo.detect_cv(roi, thresh, true);
+#ifdef DEBUG
+                    std::cout << "[DEBUG] " << p_data.uuid << "\tresult.size\t" << result.size() << "\tcam: " << i << std::endl;
+#endif // DEBUG
                     std::pair<int, std::vector<bbox_t>> _pair(i, result);
 #else
                     std::vector<YOLOv4::DetectRes> result = yolo->EngineInference(roi);
@@ -520,10 +527,10 @@ int main(int argc, char **argv)
 
 #ifdef VIDEO_EXAMPLES
 #define TYPE std::string
-#define SOURCE0 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_0.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE1 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_1.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE2 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_2.mp4 ! decodebin ! autovideoconvert ! appsink")
-#define SOURCE3 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/DAT_3.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE0 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_0.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE1 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_1.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE2 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_2.mp4 ! decodebin ! autovideoconvert ! appsink")
+#define SOURCE3 std::string("filesrc location=/mnt/2B59B0F32ED5FBD7/Projects/KIKAI/samples/nobi-random-video/DAT_3.mp4 ! decodebin ! autovideoconvert ! appsink")
 #define BACKEND cv::CAP_GSTREAMER
 #endif // VIDEO_EXAMPLES
 
