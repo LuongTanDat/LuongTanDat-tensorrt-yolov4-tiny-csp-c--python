@@ -57,8 +57,6 @@ if (JSON)
     add_definitions(-DJSON)
 endif (JSON)
 
-set(LIB ${LIB} -lboost_system -lboost_thread)
-
 # CUDA
 find_package(CUDA REQUIRED)
 set(LIB ${LIB} ${CUDA_LIBRARIES})
@@ -69,7 +67,11 @@ find_package(OpenCV REQUIRED)
 set(LIB ${LIB} ${OpenCV_LIBRARIES})
 set(INC ${INC} ${OpenCV_INCLUDE_DIRS})
 
+# Boost
 find_package(Boost REQUIRED)
+set(INC ${INC} ${Boost_INCLUDE_DIR})
+set(LIB ${LIB} ${Boost_LIBRARIES})
+set(LIB ${LIB} -lboost_system -lboost_thread)
 
 if (FOUR_CAMS OR SINGLE_CAM)
     set(SRC ${SRC} VideoCapture.cpp)
