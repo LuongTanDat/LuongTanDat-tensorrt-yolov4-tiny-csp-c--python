@@ -1115,9 +1115,9 @@ def main(cfg_file='yolov4.cfg', weights_file='yolov4.weights', output_file='yolo
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transform YOLO weights to ONNX.')
-    parser.add_argument('--cfg_file', type=str, default='/media/kikai/HNIW/24-06-weights_512/vizgard_512.cfg', help='yolo cfg file')
-    parser.add_argument('--weights_file', type=str, default='/media/kikai/HNIW/24-06-weights_512/vizgard_best.weights', help='yolo weights file')
-    parser.add_argument('--output_file', type=str, default='/media/kikai/HNIW/24-06-weights_512/vizgard_512.onnx', help='yolo onnx file')
+    parser.add_argument('--cfg_file', type=str, default='/media/kikai/HNIW/24-06-weights_512/yolov4_512.cfg', help='yolo cfg file')
+    parser.add_argument('--weights_file', type=str, default='/media/kikai/HNIW/24-06-weights_512/yolov4_best.weights', help='yolo weights file')
+    parser.add_argument('--output_file', type=str, default='/media/kikai/HNIW/24-06-weights_512/yolov4_512.onnx', help='yolo onnx file')
     parser.add_argument('--strides', nargs='+', type=int, default=[8, 16, 32], help='YOLO model cell size')
     parser.add_argument('--neck', type=str, default='PAN', help='use which kind neck')
     args = parser.parse_args()
