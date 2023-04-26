@@ -16,8 +16,6 @@
 
 #define YOLOv4_CSP_512
 // #define YOLOv4_608
-// #define YOLOv4_512_VIZGARD
-// #define YOLOv4_768_VIZGARD
 
 #include <thread>
 #include <chrono>
